@@ -1,0 +1,14 @@
+<!DOCTYPE object [
+<!ELEMENT object (object|attribute)*>
+<!ATTLIST object
+name CDATA #IMPLIED
+id CDATA #REQUIRED
+serialiser CDATA #REQUIRED
+>
+<!ELEMENT attribute EMPTY>
+<!ATTLIST attribute
+name CDATA #REQUIRED
+value CDATA #REQUIRED
+>
+]>
+<object name="network" serialiser="ipsim.persistence.delegates.NetworkDelegate" id="0"><attribute name="isProblemDownloaded" value="false"/><object name="log" serialiser="ipsim.persistence.delegates.LogDelegate" id="1"><object name="entry 0" serialiser="ipsim.persistence.delegates.DefaultCommandDelegate" id="2"><attribute name="description" value="Tested the connectivity, 0% connected."/></object></object></object>

@@ -1,0 +1,14 @@
+<!DOCTYPE object [
+<!ELEMENT object (object|attribute)*>
+<!ATTLIST object
+name CDATA #IMPLIED
+id CDATA #REQUIRED
+serialiser CDATA #REQUIRED
+>
+<!ELEMENT attribute EMPTY>
+<!ATTLIST attribute
+name CDATA #REQUIRED
+value CDATA #REQUIRED
+>
+]>
+<object name="network" serialiser="ipsim.persistence.delegates.NetworkDelegate" id="0"><attribute name="isProblemDownloaded" value="false"/><object name="problem" serialiser="ipsim.persistence.delegates.ProblemDelegate" id="1"><attribute name="networkNumber" value="67.177.128.0"/><attribute name="subnetMask" value="255.255.252.0"/><attribute name="numberOfSubnets" value="5"/></object><object name="log" serialiser="ipsim.persistence.delegates.LogDelegate" id="2"></object></object>

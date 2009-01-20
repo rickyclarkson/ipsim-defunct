@@ -1,0 +1,14 @@
+<!DOCTYPE object [
+<!ELEMENT object (object|attribute)*>
+<!ATTLIST object
+name CDATA #IMPLIED
+id CDATA #REQUIRED
+serialiser CDATA #REQUIRED
+>
+<!ELEMENT attribute EMPTY>
+<!ATTLIST attribute
+name CDATA #REQUIRED
+value CDATA #REQUIRED
+>
+]>
+<object name="network" serialiser="ipsim.persistence.delegates.NetworkDelegate" id="0"><attribute name="version" value="1.5beta"/><object name="child 0" serialiser="ipsim.persistence.delegates.ComputerDelegate" id="1"><attribute name="ipForwardingEnabled" value="false"/><attribute name="computerId" value="201"/><object name="point 0" serialiser="ipsim.persistence.delegates.PointDelegate" id="2"><attribute name="x" value="342.0"/><attribute name="y" value="282.0"/></object><object name="routingTable" serialiser="ipsim.persistence.delegates.RoutingTableDelegate" id="3"></object></object><object name="child 1" serialiser="ipsim.persistence.delegates.ComputerDelegate" id="4"><attribute name="ipForwardingEnabled" value="false"/><attribute name="computerId" value="200"/><object name="point 0" serialiser="ipsim.persistence.delegates.PointDelegate" id="5"><attribute name="x" value="169.0"/><attribute name="y" value="129.0"/></object><object name="routingTable" serialiser="ipsim.persistence.delegates.RoutingTableDelegate" id="6"></object></object><object name="child 2" serialiser="ipsim.persistence.delegates.ComputerDelegate" id="7"><attribute name="ipForwardingEnabled" value="false"/><attribute name="computerId" value="202"/><object name="point 0" serialiser="ipsim.persistence.delegates.PointDelegate" id="8"><attribute name="x" value="447.0"/><attribute name="y" value="141.0"/></object><object name="routingTable" serialiser="ipsim.persistence.delegates.RoutingTableDelegate" id="9"></object></object><object name="log" serialiser="ipsim.persistence.delegates.LogDelegate" id="10"><object name="entry 0" serialiser="ipsim.persistence.delegates.DefaultCommandDelegate" id="11"><attribute name="description" value="Created computer 200 at (169.0,129.0)."/></object><object name="entry 1" serialiser="ipsim.persistence.delegates.DefaultCommandDelegate" id="12"><attribute name="description" value="Created computer 201 at (342.0,282.0)."/></object><object name="entry 2" serialiser="ipsim.persistence.delegates.DefaultCommandDelegate" id="13"><attribute name="description" value="Created computer 202 at (447.0,141.0)."/></object></object></object>

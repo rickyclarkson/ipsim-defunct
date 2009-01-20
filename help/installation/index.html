@@ -1,0 +1,241 @@
+<html>
+	<head>
+		<title>
+			Installing and running IPSim, and working with a simple
+			network.
+		</title>
+		
+		<link type='text/css' href='../page.css' rel='stylesheet'>
+	</head>
+
+	<body>
+		<h1>
+			Installing and running IPSim, and working with a simple
+			network.
+		</h1>
+		
+		<h2>Installing Java</h2>
+		
+		<p>
+			If you are running IPSim on one of the machines in
+			the CSE labs, you can
+			move on to the next section, as Java is already
+			installed.  Also, if you have already installed Java on
+			your machine, you can move on to the next section.
+		</p>
+
+		<p>
+					If you are unsure as to whether
+					you have installed Java, go to Start-&gt;Run, then type 'cmd' in the box that appears.
+		</p>
+		<p>
+					<img src="startrun.PNG" alt="Start-&gt;Run">&nbsp;&nbsp;&nbsp;
+					<img src="typecmd.png" alt="'cmd'">
+		</p>
+				
+		<p>
+			In the window that appears, type this, exactly: java -version
+		</p>
+		
+		<p>
+			You should see something like the following, and the version number should be at
+			least 1.5.
+		</p>
+		
+		<pre><code>
+		C:\Documents and Settings\home&gt;java -version
+		java version "1.5.0_07"
+		Java(TM) 2 Runtime Environment, Standard Edition (build 1.5.0_07-b03)
+		Java HotSpot(TM) Client VM (build 1.5.0_07-b03, mixed mode, sharing)</code></pre>
+		
+		<p>
+			If you do this on Linux and see gij or kaffe, then you haven't got Java installed,
+			but something similar to Java.  Find out how to install Sun Java on your system.
+			The installation method varies slightly for each Linux distribution.
+		</p>
+		
+		<p>
+			The installation instructions are on Sun Microsystems'
+			website, but I have described them for Windows here.
+			They may have changed since this writing, please
+			tell us about this, by emailing <a href="mailto:devel@ipsim.com">devel@ipsim.com</a>.
+		</p>
+		
+		<h3>Windows Installation</h3>
+		
+		<ul>
+			<li>Open a web browser.</li>
+			<li>Navigate to <a href="http://java.sun.com">http://java.sun.com</a>.</li>
+			<li>Click on the link "Java VM".</li>
+			<li>Click on the image marked "Get It Now".</li>
+			<li>A window should appear with the question
+			"Do you want to install and run Java Plug-in X.X?".
+			The version number may be 1.5, 1.6, 5.0, 6.0, etc.</li>
+			<li>A window should appear with a licence agreement.
+			When you have finished reading it, click
+			"I accept the terms in the license agreement", then
+			click Next to proceed.</li>
+			<li>Click Typical (when asked whether you want a
+			typical or custom installation), then click Next to
+			proceed.</li>
+			<li>Wait for the Java VM to install, then click Finish.
+			</li>
+			<li>Restart your system (this doesn't have to be done
+			immediately.</li>
+		</ul>
+		
+		<h2>Downloading/installing IPSim</h2>
+		
+		<p>
+			Navigate to
+			<a href="http://www.ipsim.com">www.ipsim.com</a>
+			with a web
+			browser and click on ipsim.jar.  It should open with Java.  If it opens with WinZIP
+			instead or some other tool, save it, then right-click on it from Explorer to
+			open with Java.  If you want to use it when you are offline then you will need to
+			save it anyway.
+		</p>
+
+		<h2>Loading a Predefined Network</h2>
+		
+		<p>
+			When you have launched IPSim, click on Ok in the initial dialog:
+		</p>
+		
+		<p>
+			<img src="okDialog.png">
+		</p>
+			
+		<p>	
+			Click the "Download Configuration" icon.  When prompted, enter 'help0'.
+
+			You should see a display like this:
+		</p>
+		
+		<p>
+			<img src="help0.png" alt="help0 configuration">
+		</p>
+		
+		<h2>Pinging a machine</h2>
+		
+		<p>
+			Right-click on the computer on the left of the display,
+			and select Ping from the menu that appears.
+		</p>
+		
+		<p>
+			In the box that appears, type 146.87.1.2, and click
+			the Ping button.  You should see "Ping successful".
+		</p>
+		
+		<p>
+			<img
+				src="ping_successful_1_2.png"
+				alt="A successful ping"
+			>
+		</p>
+		
+		<p>
+			You just made the computer on the left 'ping' the
+			computer in the centre of the display.  The computer on
+			the left has the IP address 146.87.1.1.  You can
+			verify this by right-clicking on the computer and
+			selecting "List IP Addresses".
+		</p>
+		
+		<p>
+			The third computer from the left is a gateway, or router, as
+			it has two network cards.  If you list its IP
+			addresses, you will see two entries:
+		</p>
+		
+		<p>
+			<img
+				src="two_ip_addresses.png"
+				alt="A list of two IP addresses"
+			>
+		</p>
+		
+		<p>
+			So, how can you tell which network card has each IP
+			address?  The list of IP addresses includes card
+			numbers.  If you hover your mouse over a card, you will
+			see its card number, and you can match the two.
+		</p>
+		
+		<p>
+			<img
+				src="hover_card1.png"
+				alt="Shows that card 1 is under the mouse"
+			>
+		</p>
+		
+		<p>
+			So, you can see that Card 1 is the card on the left,
+			so the card on the left of the computer in the centre
+			of the display has the IP address 146.87.1.2.  That is
+			the address that we pinged earlier.  So we know that
+			that part of the network is working.
+		</p>
+		
+		<p>
+			Now use the same techniques to discover the IP address
+			of the right-hand network card on the computer in the
+			centre, and the IP address of the network card on
+			the computer on the far right of the display.
+		</p>
+		
+		<p>
+			You should find that they are 146.87.2.1 and
+			146.87.2.2 respectively.
+		</p>
+		
+		<p>
+			From the computer with the IP address 146.87.2.2, ping
+			the computer with the IP address 146.87.2.1.
+		</p>
+		
+		<p>
+			<img
+				src="ping_unsuccessful_2_1.png"
+				alt="Host unreachable"
+			>
+		</p>
+		
+		<p>
+			The first thing to check is that everything is
+			physically connected, which we can see at a first
+			glance.  You can check to see which objects are
+			connected to each other by dragging them around with
+			the mouse.
+		</p>
+		
+		<p>
+			So there are two likely faults.  One, or both, of the
+			computers are configured incorrectly, or the hub has
+			no power.  The easiest fault to look for is the power
+			to the hub.  A powered-up hub has a green light on it.
+			This one does not.
+		</p>
+		
+		<p>
+			Right-click on the hub, and select "Toggle Power".  The green light should
+			now appear.
+		</p>
+		
+		<p>
+			Now repeat the ping that you performed earlier.
+		</p>
+		
+		<p>
+			<img
+				src="ping_successful_2_1.png"
+				alt="The ping succeeds"
+			>
+		</p>
+		
+		<p>
+			<a href="../index.html">Back to Contents</a>
+		</p>
+	</body>
+</html>

@@ -1,0 +1,531 @@
+datafiles/unconnected/1.57.ipsim
+IP address that doesn't match the problem given.
+Less subnets in the solution than the problem requires.
+
+
+datafiles/unconnected/1.59.ipsim
+IP address that doesn't match the problem given.
+A subnet mask that is equal to or shorter than the problem's netmask.
+Less subnets in the solution than the problem requires.
+Card with an all-0s host part of its IP address.
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/1.48.ipsim
+Less subnets in the solution than the problem requires.
+Card without a cable.
+67% of the IP addresses are identical.
+Hub with more than one subnet connected to it.
+Card with a non-standard netmask.
+Computer with a route that points at itself.
+Computer with a route to a non-existent gateway.
+
+
+datafiles/unconnected/1.43.ipsim
+Less subnets in the solution than the problem requires.
+Card without a cable.
+67% of the IP addresses are identical.
+Hub with more than one subnet connected to it.
+Card with a non-standard netmask.
+Computer with a route that points at itself.
+Computer with a route to a non-existent gateway.
+
+
+datafiles/unconnected/1.44.ipsim
+Less subnets in the solution than the problem requires.
+Card without a cable.
+67% of the IP addresses are identical.
+Computer with a route that points at itself.
+Computer with a route to a non-existent gateway.
+
+
+datafiles/unconnected/1.26.ipsim
+A subnet that uses an all-0s subnet number.
+Less subnets in the solution than the problem requires.
+Hub with more than one subnet connected to it.
+Hub with no standalone (non-gateway) computer.
+Card with a non-standard netmask.
+Computer that has multiple cards with the same subnet number.
+Computer with more than one default route.
+Non-gateway computer without a default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.27.ipsim
+A subnet that uses an all-0s subnet number.
+Less subnets in the solution than the problem requires.
+Hub with more than one subnet connected to it.
+Hub with no standalone (non-gateway) computer.
+Card with a non-standard netmask.
+Computer that has multiple cards with the same subnet number.
+Computer with more than one default route.
+Non-gateway computer without a default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.37.ipsim
+Cycle in default routes.
+Less subnets in the solution than the problem requires.
+Card with no device drivers.
+Computer that has multiple cards with the same subnet number.
+Computer with a route that points at itself.
+Computer with more than one default route.
+Non-gateway computer without a default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.50.ipsim
+A subnet mask that is equal to or shorter than the problem's netmask.
+Less subnets in the solution than the problem requires.
+Hub with no standalone (non-gateway) computer.
+Computer that has multiple cards with the same subnet number.
+Computer with a route to a computer that is not a gateway.
+Non-gateway computer without a default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.56.ipsim
+IP address that doesn't match the problem given.
+More subnets in the solution than are in the problem.
+A hub that has no cables.
+Hub with more than one subnet connected to it.
+Hub with no standalone (non-gateway) computer.
+Computer with a route that points at itself.
+Computer with more than one default route.
+Computer with a route to a non-existent gateway.
+Non-gateway computer without a default route.
+Computer with more than one route to the same network.
+Computer with more than one route to the same subnet.
+
+
+datafiles/unconnected/1.38.ipsim
+A subnet mask that is equal to or shorter than the problem's netmask.
+Less subnets in the solution than the problem requires.
+Hub with no standalone (non-gateway) computer.
+Computer that has multiple cards with the same subnet number.
+Non-gateway computer without a default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.52.ipsim
+Less subnets in the solution than the problem requires.
+Hub with no standalone (non-gateway) computer.
+Card with a non-standard netmask.
+Computer that has multiple cards with the same subnet number.
+Non-gateway computer without a default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.39.ipsim
+A subnet mask that is equal to or shorter than the problem's netmask.
+Less subnets in the solution than the problem requires.
+Hub with no standalone (non-gateway) computer.
+Computer that has multiple cards with the same subnet number.
+Non-gateway computer without a default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.41.ipsim
+A subnet mask that is equal to or shorter than the problem's netmask.
+Less subnets in the solution than the problem requires.
+Hub with no standalone (non-gateway) computer.
+Computer that has multiple cards with the same subnet number.
+Non-gateway computer without a default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.10.ipsim
+50% of the IP addresses are identical.
+Hub with more than one subnet connected to it.
+Card with a non-standard netmask.
+Computer with more than one default route.
+Route with a non-local gateway (this is a bug if it isn't from an old saved file).
+
+
+datafiles/unconnected/1.34.ipsim
+A subnet that uses an all-0s subnet number.
+Less subnets in the solution than the problem requires.
+Computer that has multiple cards with the same subnet number.
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/1.60.ipsim
+IP address that doesn't match the problem given.
+Less subnets in the solution than the problem requires.
+Card with no device drivers.
+A card with a 0.0.0.0 IP address.
+Hub with no standalone (non-gateway) computer.
+Computer that has multiple cards with the same subnet number.
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/1.51.ipsim
+A subnet mask that is equal to or shorter than the problem's netmask.
+Less subnets in the solution than the problem requires.
+Hub with no standalone (non-gateway) computer.
+Computer that has multiple cards with the same subnet number.
+
+
+datafiles/unconnected/101.2.ipsim
+Less subnets in the solution than the problem requires.
+Hub with more than one subnet connected to it.
+Computer with a route to a non-existent gateway.
+Non-gateway computer without a default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.14.ipsim
+50% of the IP addresses are identical.
+Hub with more than one subnet connected to it.
+Card with a non-standard netmask.
+Computer with more than one default route.
+Route with a non-local gateway (this is a bug if it isn't from an old saved file).
+
+
+datafiles/unconnected/1.32.ipsim
+A subnet that uses an all-0s subnet number.
+Less subnets in the solution than the problem requires.
+Computer that has multiple cards with the same subnet number.
+
+
+datafiles/unconnected/1.36.ipsim
+25% of the IP addresses are identical.
+Hub with more than one subnet connected to it.
+Hub with no standalone (non-gateway) computer.
+Card with a non-standard netmask.
+Computer with a route that points at itself.
+Computer with a route to a non-existent gateway.
+
+
+datafiles/unconnected/1.33.ipsim
+Cycle in default routes.
+Hub with more than one subnet connected to it.
+Hub with no standalone (non-gateway) computer.
+Computer with a route that points at itself.
+Computer with a route to a non-existent gateway.
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/1.24.ipsim
+A subnet mask that is equal to or shorter than the problem's netmask.
+Less subnets in the solution than the problem requires.
+Computer that has multiple cards with the same subnet number.
+Computer with a route to a non-existent gateway.
+Route with a non-local gateway (this is a bug if it isn't from an old saved file).
+
+
+datafiles/unconnected/1.40.ipsim
+Cycle in default routes.
+Hub with more than one subnet connected to it.
+Computer with a route that points at itself.
+Computer with more than one default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.42.ipsim
+Cycle in default routes.
+Hub with more than one subnet connected to it.
+Computer with a route that points at itself.
+Computer with more than one default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.16.ipsim
+A subnet that uses an all-0s subnet number.
+More subnets in the solution than are in the problem.
+Hub with more than one subnet connected to it.
+Computer with a route to a non-existent gateway.
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/1.35.ipsim
+Cycle in default routes.
+Card with no device drivers.
+A card with a 0.0.0.0 IP address.
+29% of the IP addresses are identical.
+Computer with a route that points at itself.
+Computer with more than one default route.
+Non-gateway computer without a default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.55.ipsim
+Less subnets in the solution than the problem requires.
+Card without a cable.
+A card with a 0.0.0.0 IP address.
+Hub with no standalone (non-gateway) computer.
+Computer that has multiple cards with the same subnet number.
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/1.53.ipsim
+A cable that has not got both ends connected to components.
+Hub with more than one subnet connected to it.
+Non-gateway computer without a default route.
+Route with a non-local gateway (this is a bug if it isn't from an old saved file).
+
+
+datafiles/unconnected/1.54.ipsim
+A cable that has not got both ends connected to components.
+Hub with more than one subnet connected to it.
+Non-gateway computer without a default route.
+Route with a non-local gateway (this is a bug if it isn't from an old saved file).
+
+
+datafiles/unconnected/1.25.ipsim
+Hub with more than one subnet connected to it.
+Hub with no standalone (non-gateway) computer.
+Computer with a route to a non-existent gateway.
+
+
+datafiles/unconnected/arpitself.ipsim
+Hub with more than one subnet connected to it.
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/1.8.ipsim
+Hub with more than one subnet connected to it.
+Route with a non-local gateway (this is a bug if it isn't from an old saved file).
+
+
+datafiles/unconnected/1.18.ipsim
+Cycle in default routes.
+Computer with a route that points at itself.
+An explicit route on a computer that is not a gateway.
+Computer with a route to a computer that is not a gateway.
+Computer with an explicit route that points to one of its local networks.
+Non-gateway computer without a default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.ipsim
+Card without a cable.
+A card with a 0.0.0.0 IP address.
+A hub that has no cables.
+Hub with no standalone (non-gateway) computer.
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/1.28.ipsim
+More subnets in the solution than are in the problem.
+A cable that has not got both ends connected to components.
+A card with a 0.0.0.0 IP address.
+Card with a non-standard netmask.
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/pingertest1.ipsim
+Cycle in default routes.
+An explicit route on a computer that is not a gateway.
+Computer with a route to a computer that is not a gateway.
+Computer with an explicit route that points to one of its local networks.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/traceroute1.ipsim
+Cycle in default routes.
+An explicit route on a computer that is not a gateway.
+Computer with a route to a computer that is not a gateway.
+Computer with an explicit route that points to one of its local networks.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.12.ipsim
+Computer with more than one default route.
+Computer with a route to a non-existent gateway.
+Non-gateway computer without a default route.
+Route with a non-local gateway (this is a bug if it isn't from an old saved file).
+
+
+datafiles/unconnected/1.47.ipsim
+Cycle in default routes.
+Computer with a route that points at itself.
+Computer with more than one default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.46.ipsim
+Cycle in default routes.
+Computer with a route that points at itself.
+Computer with more than one default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/unconnected/1.20.ipsim
+Card with an all-0s host part of its IP address.
+Hub with no standalone (non-gateway) computer.
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/1.22.ipsim
+Card without a cable.
+Computer with a route that points at itself.
+Computer with a route to a computer that is not a gateway.
+
+
+datafiles/unconnected/1.49.ipsim
+Cycle in default routes.
+More subnets in the solution than are in the problem.
+Hub with no standalone (non-gateway) computer.
+
+
+datafiles/unconnected/1.9.ipsim
+A subnet that uses an all-0s subnet number.
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/broadcast.ipsim
+All-1s host number.
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/broadcastaddress.ipsim
+All-1s host number.
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/1.13.ipsim
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/1.19.ipsim
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/hubdisabled.ipsim
+Non-gateway computer without a default route.
+
+
+datafiles/unconnected/1.21.ipsim
+
+
+datafiles/unconnected/1.23.ipsim
+
+
+datafiles/fullyconnected/1.63.ipsim
+Less subnets in the solution than the problem requires.
+Card without a cable.
+Card with no device drivers.
+Computer with a route to a computer that is not a gateway.
+Non-gateway computer without a default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/fullyconnected/1.64.ipsim
+A subnet that uses an all-0s subnet number.
+Less subnets in the solution than the problem requires.
+Card with no device drivers.
+Hub with no standalone (non-gateway) computer.
+Non-gateway computer without a default route.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/fullyconnected/broadcast1.ipsim
+Less subnets in the solution than the problem requires.
+Hub with more than one subnet connected to it.
+Computer with a route to a non-existent gateway.
+
+
+datafiles/fullyconnected/1.61.ipsim
+Less subnets in the solution than the problem requires.
+Card without a cable.
+Card with no device drivers.
+Card with an all-0s host part of its IP address.
+Hub with no standalone (non-gateway) computer.
+
+
+datafiles/fullyconnected/101.ipsim
+Hub with more than one subnet connected to it.
+
+
+datafiles/fullyconnected/arpforeign2.ipsim
+Hub with more than one subnet connected to it.
+
+
+datafiles/fullyconnected/1.5.ipsim
+Cycle in default routes.
+An explicit route on a computer that is not a gateway.
+Computer with a route to a computer that is not a gateway.
+Computer with an explicit route that points to one of its local networks.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/fullyconnected/1.6.ipsim
+Cycle in default routes.
+An explicit route on a computer that is not a gateway.
+Computer with a route to a computer that is not a gateway.
+Computer with an explicit route that points to one of its local networks.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/fullyconnected/1.7.ipsim
+Cycle in default routes.
+An explicit route on a computer that is not a gateway.
+Computer with a route to a computer that is not a gateway.
+Computer with an explicit route that points to one of its local networks.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/fullyconnected/routingloop1.ipsim
+Computer with a route to a computer that is not a gateway.
+Computer that is not a gateway but has packet forwarding enabled.
+
+
+datafiles/fullyconnected/6.ipsim
+More subnets in the solution than are in the problem.
+Hub with no standalone (non-gateway) computer.
+
+
+datafiles/fullyconnected/arpforeign.ipsim
+Card without a cable.
+
+
+datafiles/fullyconnected/1.4.ipsim
+Non-gateway computer without a default route.
+
+
+datafiles/fullyconnected/1.52.ipsim
+Cycle in default routes.
+
+
+datafiles/fullyconnected/1.58.ipsim
+Hub with no standalone (non-gateway) computer.
+
+
+datafiles/fullyconnected/5.ipsim
+More subnets in the solution than are in the problem.
+
+
+datafiles/fullyconnected/1.ipsim
+Non-gateway computer without a default route.
+
+
+datafiles/fullyconnected/arpfromip.ipsim
+Non-gateway computer without a default route.
+
+
+datafiles/fullyconnected/simplest.ipsim
+Non-gateway computer without a default route.
+
+
+datafiles/fullyconnected/1-2-1.ipsim
+
+
+datafiles/fullyconnected/1-2.ipsim
+
+
+datafiles/fullyconnected/1.15.ipsim
+
+
+datafiles/fullyconnected/1.17.ipsim
+
+
+datafiles/fullyconnected/3.ipsim
+
+
+datafiles/fullyconnected/1.62.ipsim
+
+
+datafiles/fullyconnected/4.ipsim
+
+

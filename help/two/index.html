@@ -1,0 +1,143 @@
+<html>
+	<head>
+		<title>
+			Creating and testing a simple Internet (one gateway)
+		</title>
+		
+		<link type='text/css' href='../page.css' rel='stylesheet'>
+	</head>
+	
+	<body>
+		<h1>
+			Creating and testing a simple Internet (one gateway)
+		</h1>
+
+		<p>
+			Drag a computer into the centre of the display, and
+			then drag <b>two</b> Ethernet cards to it.
+		</p>
+
+		<p>
+			<img
+				src="gateway.png"
+				alt="A computer with two Ethernet cards"
+			>
+		</p>
+
+		<p>
+			Install the two cards.  For this example, install the
+			rightmost card first.  To make sure you have done this
+			correctly, hover the mouse over the cards, and you
+			should see "Card 0" over the rightmost card, and
+			"Card 1" over the leftmost card.
+		</p>
+
+		<p>
+			Now add other components as in the following diagram,
+			remembering to install the Ethernet cards and enable
+			power on the hubs.
+		</p>
+
+		<p>
+			<img src="two_subnets.png" alt="2 subnets">
+		</p>
+
+		<p>
+			On the computer at the top-left, set the IP address
+			"146.87.1.1" and the netmask "255.255.255.0".
+		</p>
+
+		<p>
+			On the computer at the bottom-left, set the IP address
+			"146.87.1.2" and the netmask "255.255.255.0".
+		</p>
+
+		<p>
+			On the computer at the top-right, set the IP address
+			"146.87.2.1" and the netmask "255.255.255.0".
+		</p>
+
+		<p>
+			On the computer at the bottom-right, set the IP address
+			"146.87.2.2" and the netmask "255.255.255.0".
+		</p>
+
+		<p>
+			On Card 0 of the computer in the centre, set the IP
+			address "146.87.2.3" and the netmask "255.255.255.0".
+		</p>
+
+		<p>
+			On Card 1 of the computer in the centre, set the IP
+			address "146.87.1.3" and the netmask "255.255.255.0".
+		</p>
+
+		<p>
+			Now test the connectivity, and examine the results.
+		</p>
+	
+		<p>
+			<img src="50_percent.png" alt="50% Connected">
+		</p>
+
+		<p>
+			Examining the pairs that can't connect to each other,
+			it is plain that the computers on the 146.87.1.0/24
+			network cannot communicate with the computers on the
+			146.87.2.0/24 network.
+		</p>
+
+		<p>
+			There are two reasons for this:
+		</p>
+			
+		<ol>
+			<li>The gateway is not forwarding packets.</li>
+			<li>The normal computers are not sending packets to the gateway to be forwarded.</li>
+		</ol>
+		
+		<p>
+			Enable Packet Forwarding on the gateway (right-click on
+			it, then select Toggle IP Forwarding).
+		</p>
+		
+		<p>
+			To the computers in the 146.87.1.0/24 subnet, add a
+			default route of 146.87.1.3 (the IP address of Card 1
+			on the gateway).  To do this, right-click on each
+			computer and select "Add Default Route" then enter
+			146.87.1.3 in the box that appears and press OK.
+		</p>
+
+		<p>
+			To the computers in the 146.87.2.0/24 subnet, add a
+			default route of 146.87.2.3 (the IP address of Card 0
+			on the gateway).
+		</p>
+
+		<p>
+			Note that for each computer, we add a default route to the gateway, but the gateway
+			has two IP addresses.  We need to choose which of the addresses to route via.  We
+			route via the local address, i.e., the address of the card that is on the same
+			network that we are adding a default route for.  Take note of this, it is a key concept.
+		</p>
+		
+		<p>
+			An analogy for this is that of crossing a bridge.  You can't cross a bridge from
+			Manchester to Salford by getting on at the Salford end.  You need to get on at the
+			locally-reachable end.
+		</p>
+		
+		<p>
+			Now test the connectivity.
+		</p>
+
+		<p>
+			<img src="one_hundred_percent.png" alt="100% Connected">
+		</p>
+		
+		<p>
+			<a href="../index.html">Back to Contents</a>
+		</p>
+	</body>
+</html>

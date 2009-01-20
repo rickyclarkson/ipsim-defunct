@@ -1,0 +1,8 @@
+BODY { background: #aaffff } 
+H1 { background: cyan }
+H3 { background: #aaaaff }
+P { margin-left: 60px; margin-right: 60px }
+A { color: blue }
+TD.white { background-color: white; border: double black; text-align: center; width: 20% }
+
+

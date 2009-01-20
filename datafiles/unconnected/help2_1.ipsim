@@ -1,0 +1,14 @@
+<!DOCTYPE object [
+<!ELEMENT object (object|attribute)*>
+<!ATTLIST object
+name CDATA #IMPLIED
+id CDATA #REQUIRED
+serialiser CDATA #REQUIRED
+>
+<!ELEMENT attribute EMPTY>
+<!ATTLIST attribute
+name CDATA #REQUIRED
+value CDATA #REQUIRED
+>
+]>
+<object name="network" serialiser="ipsim.persistence.delegates.NetworkDelegate" id="0"><attribute name="version" value="1.5beta"/><object name="child 0" serialiser="ipsim.persistence.delegates.ComputerDelegate" id="1"><attribute name="ipForwardingEnabled" value="false"/><attribute name="computerId" value="200"/><object name="child 0" serialiser="ipsim.persistence.delegates.EthernetCardDelegate" id="2"><attribute name="ethNumber" value="-1"/><attribute name="angle" value="0"/><object name="parent 0" serialiser="ipsim.persistence.delegates.ComputerDelegate" id="1"></object></object><object name="child 1" serialiser="ipsim.persistence.delegates.EthernetCardDelegate" id="3"><attribute name="ethNumber" value="-1"/><attribute name="angle" value="-1"/><object name="parent 0" serialiser="ipsim.persistence.delegates.ComputerDelegate" id="1"></object></object><object name="point 0" serialiser="ipsim.persistence.delegates.PointDelegate" id="4"><attribute name="x" value="121.0"/><attribute name="y" value="56.0"/></object><object name="routingTable" serialiser="ipsim.persistence.delegates.RoutingTableDelegate" id="5"></object></object><object name="log" serialiser="ipsim.persistence.delegates.LogDelegate" id="6"><object name="entry 0" serialiser="ipsim.persistence.delegates.DefaultCommandDelegate" id="7"><attribute name="description" value="Created computer 200 at (98.0,59.0)."/></object><object name="entry 1" serialiser="ipsim.persistence.delegates.DefaultCommandDelegate" id="8"><attribute name="description" value="Created an Ethernet card (103.0,58.0)."/></object><object name="entry 2" serialiser="ipsim.persistence.delegates.DefaultCommandDelegate" id="9"><attribute name="description" value="Connected an Ethernet card (103.0,58.0) to computer 200 at (98.0,59.0)"/></object><object name="entry 3" serialiser="ipsim.persistence.delegates.DefaultCommandDelegate" id="10"><attribute name="description" value="Created an Ethernet card (99.0,57.0)."/></object><object name="entry 4" serialiser="ipsim.persistence.delegates.DefaultCommandDelegate" id="11"><attribute name="description" value="Connected an Ethernet card (99.0,57.0) to computer 200 at (98.0,59.0)"/></object></object></object>
