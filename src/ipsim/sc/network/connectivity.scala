@@ -7,7 +7,7 @@ import ipsim.network.connectivity.ping.{PingData, PingResults, Request, Reply}
 import PingResults.{timedOut, hostUnreachable, ttlExpired, pingReplyReceived, netUnreachable}
 import ipsim.gui.Global
 
-case class PacketQueue {
+class PacketQueue {
  var pendingRequests = new java.util.LinkedList[Runnable]
  val emptyQueueListeners = new jcl.ArrayList[Runnable]
 
@@ -49,7 +49,7 @@ object ConnectivityTest { def testConnectivity(logger: String => Unit, progress:
    val isBroadcast = card.netBlock.broadcastAddress == ipAddress
    if (!firstResult.pingReplyReceived || isBroadcast) {
     if (isBroadcast) pingResults = List(PingResults.hostUnreachable(SourceIPAddress(sourceIP))) ++ pingResults.tail 
-    results += (sourceIP+" cannot ping "+ipAddress+": "+firstResult) } }
+    results ++= List(sourceIP+" cannot ping "+ipAddress+": "+firstResult) } }
                                                                                  progress(currentComputer * 100 / computers.size)
   currentComputer += 1 } }
  new { val percentConnected = (100 - results.size * 100.0 / total).toInt
@@ -133,9 +133,9 @@ object ComputerArpOutgoingTest { def test = () => {
  val computer = new Computer(Point origin) withID network.generateComputerID
  import network.{packetQueue => queue}
  val answer = new StringBuilder
- computer.outgoingPacketListeners = computer.outgoingPacketListeners + new OutgoingPacketListener {
+ computer.outgoingPacketListeners = computer.outgoingPacketListeners ++ List(new OutgoingPacketListener {
   def packetOutgoing(packet: Packet, source: PacketSource)(implicit network: Network) =
-   packet.asEthernetPacket foreach (ethPacket => source.asComputer foreach (c => ethPacket.data.asArpPacket foreach (a => answer.append("Pass")))) }
+   packet.asEthernetPacket foreach (ethPacket => source.asComputer foreach (c => ethPacket.data.asArpPacket foreach (a => answer.append("Pass")))) })
  val arpPacket = ArpPacket(IPAddress(0), MacAddress(5), IPAddress(0), MacAddress(10), new Object)
  queue.enqueueOutgoingPacket(arpPacket, computer)
  queue.processAll

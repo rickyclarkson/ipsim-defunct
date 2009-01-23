@@ -13,8 +13,9 @@ case class XMLDeserialiser(private[persistence] input: Document) {
  val objectsRead = new mutable.HashMap[Integer, Any]
 
  def readObject[T](delegate: ReadDelegate[T]): Option[T] = readObject(DOMSimple.getChildElementNode(input, "object"), delegate)
- def readObject[T](node: Node, name: String, delegate: ReadDelegate[T]): Option[T] =
+ def readObject[T](node: Node, name: String, delegate: ReadDelegate[T]): Option[T] = {
   (for (node2 <- DOMSimple.getChildNodes(node, "object").toStream; if getAttribute(node2, "name")==name) yield readObject(node2, delegate))(0)
+ }
  def readObject[T](node: Node, delegate: ReadDelegate[T]): Option[T] = {
   val id = Integer.parseInt(getAttribute(node, "id").get)
   objectsRead.get(id) match { case Some(result) => Some(result.asInstanceOf[T])
@@ -44,7 +45,7 @@ case class XMLSerialiser(writer: Writer) {
               tmp = alreadyStoredVar.size
              tmp }
   writer.write("<object name=\"" + name + "\" serialiser=\"" + delegate.identifier + "\" id=\"" + id + "\">")
-  if (id == alreadyStoredVar.size) { alreadyStoredVar = alreadyStoredVar + obj
+  if (id == alreadyStoredVar.size) { alreadyStoredVar = alreadyStoredVar ++ List(obj)
                                   delegate.writeXML(this, obj) }
   writer.write("</object>")
   this }
@@ -55,7 +56,7 @@ case class XMLSerialiser(writer: Writer) {
  def close = writer.close }
 
 object LogRetentionTest { def apply = { implicit var network = new Network
-                                        network.log += "Sample Data"
+                                        network.log ++= List("Sample Data")
                                         val xml = network.saveToString
                                         network = new Network
                                         network.loadFromString(xml)

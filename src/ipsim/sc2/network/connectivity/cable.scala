@@ -3,7 +3,6 @@ package ipsim.network.connectivity.cable
 import ipsim.network.{Card, Network, Hub, Positions}
 
 import ipsim.awt.Point
-import ipsim.Caster.asNotNull
 import ipsim.lang.Assertion.assertTrue
 import ipsim.lang.Maths.approxEqual
 
@@ -36,6 +35,6 @@ object CableTest {
   val cable=Cable(Left(Point(5, 5)), Left(Point(10, 10)))
 
   var a=0
-  while (a<cable.positions.size) { assertTrue(Array(approxEqual(Positions.position(cable,a).x,5+a*5)))
+  while (a<cable.positions.size) { assertTrue(approxEqual(Positions.position(cable,a).x,5+a*5))
                                    a=a+1 }
   true } }

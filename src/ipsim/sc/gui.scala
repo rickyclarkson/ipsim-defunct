@@ -15,17 +15,18 @@ import ipsim.io.IOUtility
 import ipsim.swing.Buttons
 import ipsim.network.connectivity.ConnectivityTest
 import ipsim.network._
+import java.util.Random
 
 object Global {
  implicit val random = new Random
- val frame: JFrame = MainFrame()
- val tabbedPane = TabbedPane()
+ val frame: JFrame = new MainFrame
+ val tabbedPane = new TabbedPane
  tabbedPane.addChangeListener(new ChangeListener { def stateChanged(e: ChangeEvent) =
   if (tabbedPane.wrapped.getSelectedIndex >= 0) statusBar.setText(networkContext.problem.map(_.toString).getOrElse("No problem set")) } )
  val statusBar = new JLabel
  val editProblemButton = new JButton("Edit Problem") { setFocusable(false) }
- val network = Network()
- val fileChooser = new JFileChooser { setFileFilter(new FileNameExtensionFilter("IPSim files", Array("ipsim"))) }
+ val network = new Network
+ val fileChooser = new JFileChooser { setFileFilter(new FileNameExtensionFilter("IPSim files", "ipsim")) }
  var filename: Option[File] = None
  def filename_(newValue: Option[File]) = { filename = newValue
                                            frame setTitle (filename map (_.getName) getOrElse "Untitled") }
@@ -67,7 +68,7 @@ object GetChildOffset {
                  case cable: Cable => throw null
                  case hub: Hub => Point.origin } } }
 
-case class TabbedPane {
+class TabbedPane {
  val wrapped = new JTabbedPane
  def selectedIndex = wrapped.getSelectedIndex
  def selectedComponent = wrapped.getSelectedComponent.asInstanceOf[Container] find (_.isInstanceOf[NetworkView]) map (_.asInstanceOf[NetworkView])
@@ -105,7 +106,7 @@ trait ToggleListeners { def off: Unit
                         def on: Unit }
 
 import UserMessages._
-case class NetworkView extends JPanel {
+class NetworkView extends JPanel {
  var ignorePaints: Boolean = false
  def ignorePaints_(b: Boolean) = { ignorePaints = b
                                    repaint() }
@@ -145,9 +146,9 @@ object MenuHandler {
  import Global.{network, tabbedPane, editProblemButton, frame, filename, fileChooser}
  val networkContext = Global.networkContext
  implicit val boilerplate = frame
- def networkNew(implicit random: Random) = { val context = NetworkContext()
+ def networkNew(implicit random: Random) = { val context = new NetworkContext
                                              network.contexts append context
-                                             val view = NetworkView()
+                                             val view = new NetworkView
                                              tabbedPane.addTab("Network "+(tabbedPane.tabCount + 1), view)
                                              tabbedPane setSelectedComponent view
                                              editProblemButton setText "Edit Problem"
@@ -158,7 +159,7 @@ object MenuHandler {
    network.loadFromFile(fileChooser.getSelectedFile)
    tabbedPane.removeAll
    for ((context, a) <- network.contexts.stream.zipWithIndex)
-    tabbedPane.addTab("Network "+(a+1), NetworkView())
+    tabbedPane.addTab("Network "+(a+1), new NetworkView)
    Global.filename=filename
    frame.repaint() }
 
@@ -184,7 +185,7 @@ object MenuHandler {
                                                                      frame.dispose
                                                                      System exit 0 }
 
- def clearAllArpTables = { network.log += "Cleared all ARP tables." 
+ def clearAllArpTables = { network.log ++= List("Cleared all ARP tables.")
                            network.all flatMap (_.asComputer) foreach (_.arpTable.clear) }
  def testConnectivity = ConnectivityTestDialog()
  def testConformance = {
@@ -195,7 +196,7 @@ object MenuHandler {
     case Some(problem) => results.percent + "% Conformance\n\n" + results.summary }
    JOptionPane.showMessageDialog(frame, message, "Conformance Test", if (results.percent == 100) JOptionPane.INFORMATION_MESSAGE
                                                                      else JOptionPane.WARNING_MESSAGE) } }
- def helpContents = HelpFrame() setVisible true
+ def helpContents = new HelpFrame setVisible true
  def helpAbout = CustomJOptionPane.showNonModalMessageDialog("About IPSim",
                                                              """IPSim is a network simulator, for teaching and assessment of
                                                              skills in static subnetting.<p><p>Version """+Global.appVersion+
@@ -254,8 +255,8 @@ object MenuHandler {
   if (result == JOptionPane.YES_OPTION) fileSave then !network.modified else result != JOptionPane.CANCEL_OPTION }
 
  import Global.networkView
- def zoomOut = network.zoomLevel /= 1.1 then networkView.repaint()
- def zoomIn = network.zoomLevel *= 1.1 then networkView.repaint()
+ def zoomOut = (network.zoomLevel /= 1.1) then networkView.repaint()
+ def zoomIn = (network.zoomLevel *= 1.1) then networkView.repaint()
  def zoomToFit = { val view = Global.networkView
                    val optimumSize = view.unzoomedPreferredSize(Global.network)
                    val actualSize = view.getVisibleRect.getSize
@@ -278,7 +279,7 @@ object MenuHandler {
 import java.awt.{Toolkit, FlowLayout}
 import ipsim.swing.ScrollableEditorPane
 import ipsim.swing.{Panel, Button}
-case class HelpFrame extends JFrame { setSize(Toolkit.getDefaultToolkit.getScreenSize.width, 600)
+class HelpFrame extends JFrame { setSize(Toolkit.getDefaultToolkit.getScreenSize.width, 600)
                                       setLocationRelativeTo(null)
                                       setTitle("IPSim Help")
                                       setLayout(new BorderLayout)
@@ -311,6 +312,10 @@ class Hyperactive(editorPane: javax.swing.JEditorPane) extends javax.swing.event
                                                                        editorPane.setPage(event.getURL) } } }
 import java.lang.Integer
 import ipsim.swing.Swing.ButtonGroup
+import anylayout._
+import anylayout.extras._
+import fj.{F, Function}
+
 object InitialDialog {
  val version = IOUtility readWholeResource InitialDialog.getClass.getResource("/timestamp").toString
  import javax.swing.JDialog
@@ -353,18 +358,17 @@ object InitialDialog {
   val constraints = PercentConstraintsUtility.newInstance(contentPane)
   val introLabelConstraint = ConstraintUtility topCentre padding
   contentPane add (introLabel, introLabelConstraint)
-  val paddingFunction = fpeas.function.FunctionUtility.constant[LayoutContext, Integer](padding)
-  val freeformConstraint = ConstraintBuilder.buildConstraint setLeft paddingFunction setTop (new fpeas.function.Function[LayoutContext, Integer] {
-   def run(layoutContext: LayoutContext) = layoutContext.getLayoutInfo(introLabel).getFarOffset.intValue + padding * 3 }
-                                                                                            ) setWidth preferredSize setHeight preferredSize
+  val freeformConstraint = ConstraintBuilder.buildConstraint setLeft Function.constant(padding) setTop (new F[LayoutContext, Integer] {
+   def f(layoutContext: LayoutContext) = layoutContext.getLayoutInfo(introLabel).getFarOffset.intValue + padding * 3 }
+                                                                                            ) setWidth ConstraintBuilder.preferredSize setHeight ConstraintBuilder.preferredSize
   contentPane add (freeformRadioButton, freeformConstraint)
   val practiceTestConstraints = RelativeConstraints below (freeformRadioButton, padding)
   contentPane add (practiceTestRadioButton, practiceTestConstraints)
   contentPane add (takeTestRadioButton, RelativeConstraints.below(practiceTestRadioButton, padding))
   val takeTestConstraints = ConstraintBuilder.buildConstraint setLeft
-   new fpeas.function.Function[LayoutContext, Integer] {
-    def run(layoutContext: LayoutContext) = layoutContext.getParentSize.intValue - 10 - layoutContext.getPreferredSize.intValue } setTop
-   new fpeas.function.Function[LayoutContext, Integer]{ def run(layoutContext: LayoutContext) = layoutContext.getLayoutInfo(practiceTestRadioButton).getOffset } setWidth preferredSize setHeight preferredSize
+   new F[LayoutContext, Integer] {
+    def f(layoutContext: LayoutContext) = layoutContext.getParentSize.intValue - 10 - layoutContext.getPreferredSize.intValue } setTop
+   new F[LayoutContext, Integer]{ def f(layoutContext: LayoutContext) = layoutContext.getLayoutInfo(practiceTestRadioButton).getOffset } setWidth ConstraintBuilder.preferredSize setHeight ConstraintBuilder.preferredSize
 
   contentPane add (practiceTroubleshootingTest, takeTestConstraints)
   contentPane add (actualTroubleshootingTest, RelativeConstraints below (practiceTroubleshootingTest, padding))
@@ -395,6 +399,10 @@ object InitialDialog {
 
 import ipsim.swing.SwingUtilities.invokeLater
 import ipsim.lang.Implicits._
+import anylayout.AnyLayout
+import anylayout.extras._
+import SizeCalculatorUtility.absoluteSize
+
 object ConnectivityTestDialog { def apply() = {
  implicit val frame = Global.frame
  val dialog = Dialogs.createDialogWithEscapeKeyToClose("Connectivity Test")
@@ -420,7 +428,7 @@ object ConnectivityTestDialog { def apply() = {
                                                                                                                      monitor.setProgress _)
                                                                      problemList setText results.outputs.reduceLeft(_ + "\n" + _)
                                                                      resultsLabel setText results.percentConnected+"% connected."
-                                                                     network.log += "Tested the connectivity, "+resultsLabel.getText
+                                                                     network.log ++= List("Tested the connectivity, "+resultsLabel.getText)
                                                                      problemList setText results.outputs.foldRight("")(_ + '\n' + _)
                                                                      invokeLater {
                                                                       monitor setProgress 100
@@ -518,7 +526,7 @@ object CardHandler {
    message("There is no cable to disconnect"),
    cable => cable.positions = 0 to cable.positions.size map (index => Left(Positions.position(cable, index))) toList))
   menu add item("Delete", 'D', card.cardDrivers fold (message("You must remove the drivers first"),
-                                                      cardDrivers => { network.log += "Deleted "+card.toString+'.'
+                                                      cardDrivers => { network.log ++= List("Deleted "+card.toString+'.')
                                                                        network delete card
                                                                        view.repaint() } ))
   menu }
@@ -595,7 +603,7 @@ case class PingDialog(computer: Computer)(implicit frame: JFrame, network: Netwo
                        val documentWriter = DocumentWriter documentWriter textArea.getDocument
                        val printWriter = new PrintWriter(documentWriter)
                        val pingResults = Pinger ping (computer, ipAddress, Global.defaultTimeToLive)
-                       network.log += pinged(computer, ipAddress, pingResults)
+                       network.log ++= List(pinged(computer, ipAddress, pingResults))
                        try { printWriter println pingResults.addString(new StringBuilder, "\n").toString } finally { printWriter.close } }
  constraints add (new JScrollPane(textArea), 10, 30, 80, 60, true, true)
  val closeButton = Buttons.closeButton("Close", wrapped)
@@ -650,7 +658,7 @@ object TracerouteDialog { def newTracerouteDialog(computer: Computer)(implicit n
          address fold (message("Malformed IP Address"), address => {
           val results = Traceroute trace (computer, address, 30)
           using(DocumentWriter.documentWriter(outputArea.getDocument))( dw => using(new PrintWriter(dw))(_ println results.toString))
-          network.log += "Tracerouted from " + computer.toString + " to " + address + ", " + results.size + " results received." } ) } } )
+          network.log ++= List("Tracerouted from " + computer.toString + " to " + address + ", " + results.size + " results received.") } ) } } )
  dialog } }
 
 import javax.swing.JTextField
@@ -713,11 +721,11 @@ object EthernetCableHandler {
  def createContextMenu(cable: Cable)(implicit frame: JFrame, network: Network, context: NetworkContext) = {
   val menu = new JPopupMenu
   menu add item("Delete", 'D', if (confirm("Really delete this Ethernet cable?")) {
-   network.log += ("Deleted " + cable + '.')
+   network.log ++= List("Deleted " + cable + '.')
    context.visibleComponentsVar = context.visibleComponentsVar filter (_ != cable)
    network.modified = true } )
   menu add item("Test Cable", 'T', { val result = cable.cableType
-                                     network.log += ("Tested a cable, result: " + result)
+                                     network.log ++= List("Tested a cable, result: " + result)
                                      message(result.toString) } )
   menu add item("Change Cable Type", 'C', { val list = new JList
                                             list setListData new Vector[CableType] { add(straightThrough)
@@ -743,7 +751,7 @@ object HubHandler { val icon = new ImageIcon(HubHandler.getClass getResource "/i
                      graphics setColor originalColor }
                     def createContextMenu(hub: Hub)(implicit frame: JFrame, network: Network, view: NetworkView) = {
                      val menu = new JPopupMenu
-                     menu add item("Delete", 'D', if (confirm("Really delete this hub?")) { network.log += ("Deleted "+hub+'.')
+                     menu add item("Delete", 'D', if (confirm("Really delete this hub?")) { network.log ++= List("Deleted "+hub+'.')
                                                                                             network delete hub
                                                                                             network.modified = true
                                                                                             view.repaint() } )
@@ -751,7 +759,7 @@ object HubHandler { val icon = new ImageIcon(HubHandler.getClass getResource "/i
                      powerItem setMnemonic 'T'
                      powerItem setSelected hub.power
                      powerItem listener { network.modified = true
-                                          network.log = network.log + ((if (powerItem isSelected) "En" else "Dis") + "abled power on "+hub+'.')
+                                          network.log = network.log ++ List((if (powerItem isSelected) "En" else "Dis") + "abled power on "+hub+'.')
                                           view.repaint() }
                      menu add powerItem
                      menu } }
@@ -834,7 +842,7 @@ object InvokeContextMenu { def invokeContextMenu(menu: JPopupMenu, component: Pa
 
 object ComponentMoved { def componentMoved(component: PacketSource, points: Array[Int])(implicit network: Network, context: NetworkContext) = component fold (
  card => { CardHandler componentMoved (card, points(0))
-           card.positions(0).right map (parent => network.log += ("Connected "+card+" to "+parent+'.')) },
+           card.positions(0).right map (parent => network.log ++= List("Connected "+card+" to "+parent+'.')) },
  computer => (),
  cable => EthernetCableHandler componentMoved (cable, points),
  hub => () ) }
@@ -872,7 +880,7 @@ object ProblemDialog { def createProblemDialog(implicit frame: JFrame, context: 
   dialog dispose }, 15, 85, 20, 15, false, false)
  dialog } }
 
-case class SubnetMaskTextField extends JTextField {
+class SubnetMaskTextField extends JTextField {
  private val validator = IPAddressValidator(IPAddress zero)
  getDocument addDocumentListener new ValidatingDocumentListener(this, getBackground, Color pink, validator)
  def netMask = NetMask.netMask(validator.address rawValue)
@@ -897,7 +905,7 @@ object AddDefaultRouteDialogUtility { def newInstance(computer: Computer)(implic
                      val ipAddress = ipAddressTextField.ipAddress
                      if (computer isLocallyReachable ipAddress) { val route = Route(zero, ipAddress)
                                                                   computer.routingTable add (Some(computer), route)
-                                                                  network.log += ("Added a default route to "+computer+" of "+ipAddress+'.')
+                                                                  network.log ++= List("Added a default route to "+computer+" of "+ipAddress+'.')
                                                                   network.modified = true
                                                                   dialog setVisible false
                                                                   dialog dispose } else { error("Gateway unreachable")
@@ -943,11 +951,11 @@ object RoutingTableEntryEditDialog {
     val realEntry = Route(newEntry.destination, newEntry.gateway)
     realRoute.fold( {
      computer.routingTable add (Some(computer), realEntry)
-     network.log = network.log + ("Added an explicit route to " + computer + " to get to the " + entry1.destination.asCustomString + "network, via the "
+     network.log = network.log ++ List("Added an explicit route to " + computer + " to get to the " + entry1.destination.asCustomString + "network, via the "
                                   + entry1.gateway + " gateway.") },
                     route => { val previous = RouteInfo(route.netBlock, route.gateway)
                                computer.routingTable replace (route, Route(newEntry destination, newEntry gateway))
-                               network.log += ("Changed a route (" + previous + " to " + newEntry + " on " + computer) } )
+                               network.log ++= List("Changed a route (" + previous + " to " + newEntry + " on " + computer) } )
    
     parent.foreach(_.populateElements)
     dialog setVisible false
@@ -996,7 +1004,7 @@ object RoutingTableDialog {
      list(entries getSelectedIndex).right.toOption foreach (route => {
       val previous = route.asCustomString
       computer.routingTable remove route
-      network.log += ("deleted a route (" + previous + ") from " + computer) } )
+      network.log ++= List("deleted a route (" + previous + ") from " + computer) } )
     populateElements }
 
    def noEntrySelected = error("Select an item before clicking on Edit or Delete")
@@ -1041,7 +1049,7 @@ object EditIPAddressDialogFactory { def newInstance(computer: Computer, ethNo: I
                                              card.netMask = (NetMask valueOf subnetMaskTextField.getText).get
                                              val after = card.ipAddress.toString
                                              val afterNetmask = card.netMask.toString
-                                             network.log += (if (before.isZero)
+                                             network.log ++= List(if (before.isZero)
                                               "Assigned IP address "+ after + " and subnet mask " + afterNetmask + " to " + cardBefore + '.' else
                                                "Changed the IP address of " + card + " from " + before + " to " + after + " and the netmask from " +
                                                              beforeNetMask + " to " + afterNetmask + '.')
@@ -1058,7 +1066,7 @@ object NetworkComponentUtility {
  def create(component: PacketSource)(implicit context: NetworkContext, network: Network) = {
   network.modified = true
   context.visibleComponentsVar = component :: context.visibleComponentsVar
-  network.log += ("Created "+component+".")
+  network.log ++= List("Created "+component+".")
   component }
  def pointsToStringWithoutDelimiters(component: PacketSource) = {
   val length = component.positions.size
@@ -1108,7 +1116,7 @@ object ScrapbookDialogUtility {
   constraints add (clearNumbers, 2, 80, 25, 10, false, false)
 
   val checkNumbersButton = new JButton("Check Numbers") listener { val results = checkNumbers(networkNumberField, netMaskField, elements)
-                                                                   network.log += ("Scrapbook - " + results._1)
+                                                                   network.log ++= List("Scrapbook - " + results._1)
                                                                    message(results._2) }
   constraints add (checkNumbersButton, 2, 70, 25, 10, false, false)
 

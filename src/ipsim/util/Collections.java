@@ -1,15 +1,13 @@
 package ipsim.util;
 
-import com.rickyclarkson.testsuite.*;
-import fpeas.function.*;
-import fpeas.lazy.*;
-import fpeas.predicate.*;
-import fpeas.sideeffect.*;
 import ipsim.lang.*;
-import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.Map.*;
+
+import fj.F;
+import fj.Effect;
+import fj.P1;
 
 public class Collections
 {
@@ -88,16 +86,16 @@ public class Collections
 		return builder.toString();
 	}
 
-	public static <K, V> String asString(final Collection<Entry<K, V>> entrySet, final Function<K, String> keyAsString, final Function<V, String> valueAsString, final String betweenKeyAndValue, final String separator)
+	public static <K, V> String asString(final Collection<Entry<K, V>> entrySet, final F<K, String> keyAsString, final F<V, String> valueAsString, final String betweenKeyAndValue, final String separator)
 	{
 		final StringBuilder builder=new StringBuilder();
 		boolean isEmpty=true;
 
 		for (final Entry<K, V> entry : entrySet)
 		{
-			builder.append(keyAsString.run(entry.getKey()));
+			builder.append(keyAsString.f(entry.getKey()));
 			builder.append(betweenKeyAndValue);
-			builder.append(valueAsString.run(entry.getValue()));
+			builder.append(valueAsString.f(entry.getValue()));
 			builder.append(separator);
 			isEmpty=false;
 		}
@@ -108,89 +106,71 @@ public class Collections
 		return builder.toString();
 	}
 
-	public static <T> int count(final Iterable<T> iterable, final Predicate<T> matcher)
+  public static <T> int count(final Iterable<T> iterable, final F<T, Boolean> matcher)
 	{
 		int total=0;
 
 		for (final T t : iterable)
-			if (matcher.invoke(t))
+			if (matcher.f(t))
 				total++;
 
 		return total;
 	}
 
-	public static <T> boolean any(final Stream<? extends T> stream, final Predicate<T> matcher)
-	{
-		return !stream.only(matcher).isEmpty();
-	}
-
-	public static <T, R> Iterable<R> forEach(final Iterable<T> iterable, final Function<T, R> runer)
+  	public static <T, R> Iterable<R> forEach(final Iterable<T> iterable, final F<T, R> runer)
 	{
 		final Collection<R> results=arrayList();
 
 		for (final T item : iterable)
-			results.add(runer.run(item));
+			results.add(runer.f(item));
 
 		return results;
 	}
 
-	public static <T> boolean all(final Iterable<T> iterable, final Predicate<? super T> predicate)
+  public static <T> boolean all(final Iterable<T> iterable, final F<? super T, Boolean> predicate)
 	{
 		for (final T item : iterable)
-			if (!predicate.invoke(item))
+			if (!predicate.f(item))
 				return false;
 
 		return true;
 	}
 
-	public static <T> Stream<T> only(final Iterable<T> iterable,final Predicate<T> filter)
-	{
-		return Stream.fromIterable(iterable).only(filter);
-	}
-
-	public static <T> String append(final Iterable<T> iterable, final Function<T, String> runer)
+	public static <T> String append(final Iterable<T> iterable, final F<T, String> runer)
 	{
 		final StringBuilder builder=new StringBuilder();
 
 		for (final T item : iterable)
-			builder.append(runer.run(item));
+			builder.append(runer.f(item));
 
 		return builder.toString();
 	}
 
-	public static <T> int sum(final Function<T, Integer> function, final T... operands)
+	public static <T> int sum(final F<T, Integer> function, final T... operands)
 	{
 		int result=0;
 
 		for (final T item : operands)
-			result+=function.run(item);
+			result+=function.f(item);
 
 		return result;
 	}
 
-	public static <T> int max(final Function<T, Integer> function, final T... operands)
+	public static <T> int max(final F<T, Integer> function, final T... operands)
 	{
 		int result=0;
 
 		for (final T item : operands)
-			result=Math.max(result, function.run(item));
+			result=Math.max(result, function.f(item));
 
 		return result;
 	}
 
-	public static <T> List<T> sort2(final Stream<T> stream, final Comparator<? super T> comparator)
+	public static <T> Effect<T> add(final Collection<T> to)
 	{
-		final List<T> copy=arrayList();
-		stream.foreach(add(copy));
-		java.util.Collections.sort(copy, comparator);
-		return copy;
-	}
-
-	public static <T> SideEffect<T> add(final Collection<T> to)
-	{
-		return new SideEffect<T>()
+		return new Effect<T>()
 		{
-			public void run(final T t)
+			public void e(final T t)
 			{
 				to.add(t);
 			}
@@ -211,7 +191,7 @@ public class Collections
 		return count;
 	}
 
-	public static <T> List<T> arrayList(@NotNull final Collection<? extends T> collection)
+	public static <T> List<T> arrayList(final Collection<? extends T> collection)
 	{
 		return new ArrayList<T>(collection);
 	}
@@ -221,7 +201,7 @@ public class Collections
 		return new ArrayList<T>(java.util.Arrays.asList(array));
 	}
 
-	public static <T, R> Iterable<R> map(final Iterable<T> input, final Function<T, R> converter)
+	public static <T, R> Iterable<R> map(final Iterable<T> input, final F<T, R> converter)
 	{
 		final Iterator<T> wrapped=input.iterator();
 
@@ -238,7 +218,7 @@ public class Collections
 
 					public R next()
 					{
-						return converter.run(wrapped.next());
+						return converter.f(wrapped.next());
 					}
 
 					public void remove()
@@ -250,18 +230,18 @@ public class Collections
 		};
 	}
 
-	public static <T> Lazy<List<T>> arrayListRef()
+	public static <T> P1<List<T>> arrayListRef()
 	{
-		return new Lazy<List<T>>()
+		return new P1<List<T>>()
 		{
-			public List<T> invoke()
+			public List<T> _1()
 			{
 				return arrayList();
 			}
 		};
 	}
 
-	public static String join(@NotNull final Iterable<String> iterable, final String separator)
+	public static String join(final Iterable<String> iterable, final String separator)
 	{
 		final StringBuilder builder=new StringBuilder();
 
@@ -280,20 +260,20 @@ public class Collections
 		return builder.toString();
 	}
 
-	public static <T,C extends Iterable<? extends T>,D extends Collection<T>> D add(final Function<C,D> clone,final C collection, final T element)
+	public static <T,C extends Iterable<? extends T>,D extends Collection<T>> D add(final F<C,D> clone,final C collection, final T element)
 	{
-		final D result=clone.run(collection);
+		final D result=clone.f(collection);
 		result.add(element);
 		return result;
 	}
 
-	public static final Lazy<Boolean> testAddCollection=new Lazy<Boolean>()
+	public static final P1<Boolean> testAddCollection=new P1<Boolean>()
 	{
-		public Boolean invoke()
+		public Boolean _1()
 		{
                     System.out.println("Collections.testAddCollection");
 
-			final Function<List<? extends String>, List<String>> clone=arrayListCopy();
+			final F<List<? extends String>, List<String>> clone=arrayListCopy();
 			final List<String> list=arrayList();
 			final Collection<String> objects=add(clone,add(clone, list, "hello"), "goodbye");
 			return objects.contains("hello") && objects.contains("goodbye");
@@ -306,30 +286,29 @@ public class Collections
 		}
 	};
 
-	public static <T> Function<List<? extends T>, List<T>> arrayListCopy()
+	public static <T> F<List<? extends T>, List<T>> arrayListCopy()
 	{
-		return new Function<List<? extends T>, List<T>>()
+		return new F<List<? extends T>, List<T>>()
 		{
-			@NotNull
-			public List<T> run(@NotNull final List<? extends T> ts)
+			public List<T> f(final List<? extends T> ts)
 			{
 				return arrayList(ts);
 			}
 		};
 	}
 
-	public static <T> void sideEffectOnEach(final Iterable<SideEffect<T>> effects, final T value)
+	public static <T> void sideEffectOnEach(final Iterable<Effect<T>> effects, final T value)
 	{
-		for (final SideEffect<T> effect: effects)
-			effect.run(value);
+		for (final Effect<T> effect: effects)
+			effect.e(value);
 	}
 
-	public static <T,R,C extends Collection<R>> C map(final Iterable<T> iterable,final Lazy<C> constructor, final Function<T, R> mapper)
+	public static <T,R,C extends Collection<R>> C map(final Iterable<T> iterable,final P1<C> constructor, final F<T, R> mapper)
 	{
-		final C c=constructor.invoke();
+		final C c=constructor._1();
 
 		for (final T t: iterable)
-			c.add(mapper.run(t));
+			c.add(mapper.f(t));
 
 		return c;
 	}
@@ -381,9 +360,9 @@ public class Collections
 		AddOrSet<T> addOrSet(int index,T item);
 	}
 
-	public static final Lazy<Boolean> testAddOrSet=new Lazy<Boolean>()
+	public static final P1<Boolean> testAddOrSet=new P1<Boolean>()
 	{
-		public Boolean invoke()
+		public Boolean _1()
 		{
 			List<Integer> list=arrayList();
 

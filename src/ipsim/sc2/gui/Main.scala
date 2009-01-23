@@ -15,4 +15,4 @@ object Main extends Application { swing.SwingUtilities.invokeLater {
   ExceptionReportDialog.handle(exception1) } }) 
 
  frame setVisible true
- MenuHandler.networkNew(new scala.Random) } }
+ MenuHandler.networkNew(new java.util.Random(0)) } }

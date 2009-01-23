@@ -1,7 +1,5 @@
 package ipsim.gui
 
-import ipsim.lang.LazyBoolean
-
 import ipsim.network.Card
 
 object TwoCablesOnOneCardTest {

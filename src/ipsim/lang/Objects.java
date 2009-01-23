@@ -1,57 +1,50 @@
 package ipsim.lang;
 
-import fpeas.function.*;
-import static fpeas.lazy.LazyUtility.*;
-import fpeas.maybe.*;
-import fpeas.predicate.*;
-import org.jetbrains.annotations.*;
+import fj.F;
+import fj.data.Option;
 
 public class Objects
 {
-	public static <T> Function<T, String> toStringRef()
+	public static <T> F<T, String> toStringRef()
 	{
-		return new Function<T, String>()
+		return new F<T, String>()
 		{
-			//TODO find out why Object works there.
-
-			@NotNull
-			public String run(@NotNull final Object o)
+			public String f(final Object o)
 			{
 				return o.toString();
 			}
 		};
 	}
 
-	public static Predicate<Object> notEquals(final Object object)
+  public static F<Object, Boolean> notEquals(final Object object)
 	{
-		return new Predicate<Object>()
+          return new F<Object, Boolean>()
 		{
-			public boolean invoke(final Object o)
+			public Boolean f(final Object o)
 			{
 				return !o.equals(object);
 			}
 		};
 	}
 
-	public static <T> Predicate<Object> equal(final T t)
+  public static <T> F<Object, Boolean> equal(final T t)
 	{
-		return new Predicate<Object>()
+          return new F<Object, Boolean>()
 		{
-			public boolean invoke(final Object t2)
+			public Boolean f(final Object t2)
 			{
 				return t2.equals(t);
 			}
 		};
 	}
 
-	@NotNull
-	public static <T,R> R lift(@Nullable final T t, final R ifNull, final Function<T, R> ifNotNull)
+	public static <T,R> R lift(final T t, final R ifNull, final F<T, R> ifNotNull)
 	{
-		return t==null ? ifNull : ifNotNull.run(t);
+		return t==null ? ifNull : ifNotNull.f(t);
 	}
 
-	public static <T,R> R lift(Maybe<T> t,final R ifNothing,final Function<T,R> ifJust)
+	public static <T,R> R lift(Option<T> t,final R ifNothing,final F<T,R> ifJust)
 	{
-		return t.apply(constant(ifNothing),ifJust);
+          return t.option(ifNothing, ifJust);
 	}
 }

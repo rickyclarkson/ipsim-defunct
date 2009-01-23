@@ -16,12 +16,13 @@ import SwingConstants.LEFT
 import scala.collection.mutable
 import ipsim.lang.Implicits._
 import java.awt.Window
+import fj.F
 
 object SwingUtilities { def invokeLater(f: => Unit)=javax.swing.SwingUtilities invokeLater new Runnable { def run=f } }
 
 object CustomJOptionPane {
  val padding: Int = 10
- val paddingFunction = new Function[LayoutContext, Integer] { def run(context: LayoutContext)=padding }
+ val paddingFunction = new F[LayoutContext, Integer] { def f(context: LayoutContext)=padding }
 
  def showYesNoCancelDialog(message: String, title: String)(implicit frame: JFrame) = {
   val dialog=createDialogWithEscapeKeyToClose(title)
@@ -93,9 +94,11 @@ object CustomJOptionPane {
   dialog setModal true
   AnyLayout.useAnyLayout(dialog.getContentPane, 0.5F, 0.5F, calculator, null)
   val messageConstraint = ConstraintUtility topCentre padding
+  def add(one: F[LayoutContext, Integer], two: F[LayoutContext, Integer]) =
+   new F[LayoutContext, Integer] { def f(c: LayoutContext) = one.f(c).intValue + two.f(c).intValue }
   val confirmationConstraint = buildConstraint.setLeft(paddingFunction).setTop(add(getFarOffset(messageLabel),paddingFunction)).setWidth(preferredSize).setHeight(preferredSize)
-  val firstButtonConstraint = buildConstraint.setLeft(paddingFunction).setTop(new Function[LayoutContext, Integer] {
-   def run(context: LayoutContext) = context.getLayoutInfo(confirmationLabel).getFarOffset.intValue+padding } ).setWidth(preferredSize).setHeight(preferredSize)
+  val firstButtonConstraint = buildConstraint.setLeft(paddingFunction).setTop(new F[LayoutContext, Integer] {
+   def f(context: LayoutContext) = context.getLayoutInfo(confirmationLabel).getFarOffset.intValue+padding } ).setWidth(preferredSize).setHeight(preferredSize)
 
   val checkBoxConstraint = RelativeConstraints.rightOf(confirmationLabel, padding)
   dialog.add(messageLabel, messageConstraint)
@@ -274,7 +277,6 @@ case class ValidatingDocumentListener(parentComponent: Component, valid: Color, 
 import javax.swing.{JPanel, JTextField}
 import anylayout.AnyLayout.useAnyLayout
 import anylayout.extras.ConstraintUtility
-import fpeas.function.FunctionUtility
 import ipsim.lang.Runnables
 
 trait LabelledTextField[T <: JTextField] { def panel: JPanel
@@ -292,7 +294,7 @@ object LabelledTextField {
   useAnyLayout(panel, 0.5f, 0.5f, new SizeCalculator { def getHeight = Math.max(field.getPreferredSize.height, label.getPreferredSize.height)
                                                        def getWidth = field.getPreferredSize.width + label.getPreferredSize.width + 5 },
                ConstraintUtility.typicalDefaultConstraint(Runnables.throwRuntimeException))
-  val constant: Function[LayoutContext, Integer] = FunctionUtility constant 0
+  val constant: F[LayoutContext, Integer] = new F[LayoutContext, Integer] { def f(c: LayoutContext) = 0 }
   panel.add(label, ConstraintUtility topLeft (constant, constant))
 
   { val _panel = panel

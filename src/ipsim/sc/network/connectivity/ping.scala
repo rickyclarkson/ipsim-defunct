@@ -45,7 +45,7 @@ object Pinger { def ping(computer: Computer, destIP: IPAddress, ttl: Int)(implic
  val hasRoute = computer.routeFor(destIP).isDefined
  val identifier = new Object
  val pingListener = PingListener(identifier)
- computer.incomingPacketListeners += pingListener
+ computer.incomingPacketListeners ++= List(pingListener)
  try { computer.ipAddresses.toList.firstOption match {
   case None => List(PingResults.netUnreachable(SourceIPAddress(IPAddress.valueOf("127.0.0.1").get)))
   case Some(ipAddress1) => {

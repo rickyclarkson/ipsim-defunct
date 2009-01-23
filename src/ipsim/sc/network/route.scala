@@ -13,7 +13,7 @@ object RoutingTableTests {
   val context=network.contexts.append(new NetworkContext)
   val computer= Computer(Point(100, 200)).useAndReturn(c => context.visibleComponentsVar = context.visibleComponentsVar prependIfNotPresent c).withID(
    network.generateComputerID)
-  val table=RoutingTable()
+  val table=new RoutingTable
   val withDrivers = Card(false, Right(computer)).useAndReturn(c => context.visibleComponentsVar = context.visibleComponentsVar.prependIfNotPresent(c)).
    installDeviceDrivers
   withDrivers.ipAddress=IPAddress.valueOf("146.87.1.1").get
@@ -33,7 +33,7 @@ object RoutingTableTests {
   card.cardDrivers.get==card2Drivers && route.netBlock.broadcastAddress==IPAddress.valueOf("146.87.1.255").get }
 
  def oneInstalledCardOnOneComputer: (Network, Card, CardDrivers, Computer) = {
-  implicit val network=Network()
+  implicit val network=new Network
   val context=network.contexts.append(new NetworkContext)
   val computer=Computer(Point(100, 200)) useAndReturn (c => context.visibleComponentsVar = context.visibleComponentsVar.prependIfNotPresent(c))
   val card=Card(false, Right(computer)) useAndReturn (c => context.visibleComponentsVar = context.visibleComponentsVar.prependIfNotPresent(c))
@@ -58,7 +58,7 @@ object Route {
   val construct = null
   val identifier = "ipsim.persistence.delegates.RoutingTableEntryDelegate" } }
 
-case class RoutingTable {
+class RoutingTable {
  private var _routes: Stream[Route] = Stream.empty
  def add(computer: Option[Computer], route: Route)(implicit network: Network) = computer match {
   case Some(computer) => if (computer.isLocallyReachable(route.gateway)) { _routes = _routes append List(route)
@@ -79,7 +79,7 @@ object RoutingTable {
    deserialiser.getObjectNames(node).filter(_!="computer").toList.sort(_.compareTo(_) < 0).foreach(
     name => table.get.add(None, deserialiser.readObject(node, name, Route.delegate).get))
    table.get }
-  def construct=Some(RoutingTable())
+  def construct=Some(new RoutingTable())
   val identifier="ipsim.persistence.delegates.RoutingTableDelegate" } }
                                                                                                                                                     
 object InvalidRouteTest { def apply = { implicit val network = new Network

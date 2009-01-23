@@ -1,11 +1,5 @@
 package ipsim.network.ethernet;
 
-import fpeas.either.*;
-import static fpeas.either.EitherUtility.*;
-import ipsim.network.connectivity.ip.*;
-import ipsim.network.ip.*;
-import ipsim.network.IPAddress;
-
 final class NetBlockUtilityOld
 { /*
 	public static NetBlock getZero()

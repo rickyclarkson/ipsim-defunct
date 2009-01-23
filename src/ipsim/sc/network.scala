@@ -1,4 +1,5 @@
 package ipsim.network
+import java.util.Random
 
 import ipsim.persistence.XMLDeserialiser
 
@@ -214,8 +215,8 @@ import ipsim.awt.Point.arbitraryPoint
 
 case class Computer(position: Point) extends PacketSource(List(Left(position)),List(),List()) {
  var ipForwardingEnabled = false
- val arpTable = ArpTable()
- val routingTable = RoutingTable()
+ val arpTable = new ArpTable()
+ val routingTable = new RoutingTable
  var computerID = 0
  var isISP = false
 
@@ -263,12 +264,13 @@ object Computer {
   val identifier = "ipsim.persistence.delegates.ComputerDelegate" }
 
  def testLoadingGivesRightNumberOfComponents = () => {
-  Network().loadFromFile(new File("datafiles/unconnected/hubdisabled.ipsim")) match {
+  new Network().loadFromFile(new File("datafiles/unconnected/hubdisabled.ipsim")) match {
    case network => network.all.size==7 && network.contexts.stream.head.visibleComponentsVar.size==7 } }
 
  import ipsim.qc.QuickCheck.check
  def testLoadingRestoresBigPipeIcon()(implicit random: Random) = check(Network.arbitraryNetwork(_), { network: Network => 
   def numISPs(network: Network) = (network.all flatMap(_.asComputer) filter (_.isISP)).toList.size
+  println("Doing")
   numISPs(network)==numISPs(network.loadFromString(network.saveToString)) } )
  def arbitraryComputer(implicit random: Random) = Computer(arbitraryPoint) }
 
@@ -387,7 +389,7 @@ case class EthernetPacket(val source: MacAddress, val dest: MacAddress, val data
 
 case class ArpEntry(macAddress: Option[MacAddress], ttl: Int) { var dead = false }
 
-case class ArpTable {
+class ArpTable {
  val map=new mutable.HashMap[IPAddress, ArpEntry]
  def put(ipAddress: IPAddress, macAddress: MacAddress)(implicit network: Network) = map.put(ipAddress, ArpEntry(Some(macAddress), network.arpCacheTimeout))
  def macAddress(gatewayIP: IPAddress) = map.get(gatewayIP) match { case Some(entry) => entry.macAddress
@@ -399,7 +401,7 @@ case class ArpTable {
 
 import ipsim.lang.Unique
 
-case class Network {
+class Network {
  implicit val _ = this
  var modified = false
  import ipsim.gui.{UserPermissions, Freeform}
@@ -411,7 +413,7 @@ case class Network {
  def logAsString = log.foldLeft(new StringBuilder)(_ append _ append '\n') toString
 
  import connectivity.PacketQueue
- val packetQueue = PacketQueue()
+ val packetQueue = new PacketQueue
  val macAddresses: List[PacketSource] = Nil
  var arpCacheTimeout = 20
  val contexts: StreamProperty[NetworkContext] = StreamProperty(Stream.empty)
@@ -424,7 +426,7 @@ case class Network {
  var nextComputerID = 200
  def generateComputerID = { nextComputerID += 1
                             nextComputerID - 1 }
- val ispContext = NetworkContext()
+ val ispContext = new NetworkContext
  var testName: Option[String] = None
  def all = { val result = mutable.HashSet[PacketSource]()
              for (c <- Stream.cons(ispContext, contexts.stream)) for (d <- c.visibleComponentsVar) result+=d
@@ -479,8 +481,8 @@ case class Network {
                                    newFile = true
                                    contexts.append(deserialiser.readObject(node, name, NetworkContext.delegate).get) }
                                   if (contexts.isEmpty) { if (newFile) throw null
-                                                          contexts.append(NetworkContext()) } }
-                   case Some(problem) => { val networkContext = NetworkContext()
+                                                          contexts.append(new NetworkContext) } }
+                   case Some(problem) => { val networkContext = new NetworkContext
                                            networkContext.problem = Some(problem)
                                            contexts.append(networkContext) } }
    ispContext.visibleComponentsVar = deserialiser.readObject(node, "ispContext", NetworkContext.delegate).get.visibleComponentsVar
@@ -531,7 +533,7 @@ object Network {
                                                                                                                       throw null }
                                                                                               identifier } } }                                            
  def arbitraryNetwork(implicit random: Random): Stream[Network] = {
-  val network = Network()
+  val network = new Network
   0 until random.nextInt(10) foreach (ignored => network.contexts.prepend(NetworkContext.arbitraryNetworkContext))
   Stream.cons(network,arbitraryNetwork) }
 
@@ -539,7 +541,7 @@ object Network {
  def saveObjectToWriter[T <: AnyRef](writer: Writer, obj: T, delegate: WriteDelegate[T]) =
   new XMLSerialiser(writer).writeObject(obj, "network", delegate).close }
 
-case class NetworkContext {
+class NetworkContext {
  var visibleComponentsVar: List[PacketSource] = Nil
  var problem: Option[Problem] = None
  def askUserForNumberOfFaults(frame: JFrame) = Stream from 1 flatMap (ignored => {
@@ -549,7 +551,7 @@ case class NetworkContext {
 
 object NetworkContext {
  def arbitraryNetworkContext(implicit random: Random): NetworkContext = {
-  val context=NetworkContext()
+  val context=new NetworkContext
   if (random.nextInt(2) == 0)
    context.problem = Some(Problem.arbitraryProblem)
   val numComponents = random nextInt 30
@@ -567,12 +569,12 @@ object NetworkContext {
     andOthers.get.visibleComponentsVar = andOthers.get.visibleComponentsVar prependIfNotPresent DelegateHelper.readFromDeserialiser(deserialiser, node,
                                                                                                                                     name).head
    andOthers.get }
-  def construct = Some(NetworkContext())
+  def construct = Some(new NetworkContext)
   def identifier = "NetworkContext" }
  def errors(s: String)(implicit frame: JFrame) = JOptionPane.showMessageDialog(frame, s, "Error", JOptionPane.ERROR_MESSAGE) }
 
 object Positions {
- def testSetPosition = { implicit val network=Network()
+ def testSetPosition = { implicit val network=new Network
                          val cable = Cable(Left(Point(50, 50)), Left(Point(100, 100)))
                          Math.abs(position(cable, 0).x-50)<0.005 }
  def centreOf(component: PacketSource)(implicit network: Network) = {
@@ -670,7 +672,7 @@ object PacketSniffer { def packetSniffer(toBeSniffed: PacketSource)(implicit fra
   private def append(string: String) = output.setText(output.getText + '\n' + string)
   def packetOutgoing(packet: Packet, source: PacketSource)(implicit network: Network) = append("Outgoing "+packet+" from "+source) }
  dialog addWindowListener new WindowAdapter {
-  override def windowClosing(e: WindowEvent) = { network.log += ("Removed a packet sniffer from " + toBeSniffed+'.')
+  override def windowClosing(e: WindowEvent) = { network.log ++= List("Removed a packet sniffer from " + toBeSniffed+'.')
                                                  toBeSniffed.incomingPacketListeners -= sniffer
                                                  toBeSniffed.outgoingPacketListeners -= sniffer } }
  sniffer } }

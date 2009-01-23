@@ -1,14 +1,12 @@
 package ipsim.lang;
 
-import fpeas.function.*;
-import org.jetbrains.annotations.*;
+import fj.F;
 
 public class Booleans
 {
-	public static final Function<String, Boolean> toString=new Function<String, Boolean>()
+	public static final F<String, Boolean> toString=new F<String, Boolean>()
 	{
-		@NotNull
-		public Boolean run(@NotNull final String s)
+		public Boolean f(final String s)
 		{
 			return Boolean.valueOf(s);
 		}

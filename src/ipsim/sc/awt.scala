@@ -1,5 +1,6 @@
 package ipsim.awt
 import java.awt.{Dialog, Frame}
+import java.util.Random
 
 case class Point(x: Double, y: Double) { def +(other: Point) = Point(x+other.x, y+other.y)
                                          def -(other: Point) = Point(x-other.x, y-other.y)

@@ -1,64 +1,31 @@
 package ipsim;
 
-import fpeas.function.*;
-import fpeas.predicate.*;
 import ipsim.lang.*;
 import ipsim.util.*;
-import fpeas.lazy.Lazy;
-import org.jetbrains.annotations.*;
-import com.rickyclarkson.testsuite.*;
+
+import fj.F;
 
 public class Caster
 {
-	public static <T> Predicate<T> equalT(@NotNull final T first)
+  public static <T> F<T, Boolean> equalT(final T first)
 	{
-		return new Predicate<T>()
+          return new F<T, Boolean>()
 		{
-			public boolean invoke(final T second)
+			public Boolean f(final T second)
 			{
 				return first.equals(second);
 			}
 		};
 	}
 
-	@NotNull
-	public static <T> T asNotNull(@Nullable final T t)
+	public static <T> F<Object, T> asFunction(final Class<T> aClass)
 	{
-		if (t==null)
-			throw null;
-
-		return t;
-	}
-
-	public static <T> Function<Object, T> asFunction(final Class<T> aClass)
-	{
-		return new Function<Object, T>()
+		return new F<Object, T>()
 		{
-			@NotNull
-			public T run(@NotNull final Object o)
+			public T f(final Object o)
 			{
 				return aClass.cast(o);
 			}
 		};
 	}
-    /*
-	public static <T> Function<Object, Stream<T>> asStreamOfType(final Class<T> type)
-	{
-		return new Function<Object, Stream<T>>()
-		{
-			@NotNull
-			public Stream<T> run(@NotNull final Object o)
-			{
-				return ((Stream<Object>)o).map(Classes.<Object,T>cast(type));
-			}
-		};
-                }*/
-
-    /*	public static final Lazy<Boolean> testAsStreamOfType=new Lazy<Boolean>()
-	{
-		public Boolean invoke()
-		{
-			return asStreamOfType(String.class).run(Stream.one("hello").prepend("world")).size()==2;
-		}
-                }; */
 }
