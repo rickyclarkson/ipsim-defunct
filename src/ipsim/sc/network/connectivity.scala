@@ -69,12 +69,15 @@ object BroadcastPingTest { def apply = { implicit val network = new Network
                                          testPing(IPAddress.valueOf("146.87.1.1").get, IPAddress.valueOf("146.87.1.255").get).size == 2 } }
 
 object FullyConnectedFilesTest {
- def test = () => { for (file <- new File("datafiles/fullyconnected").listFiles) { implicit val network = new Network
-                                                                                   network loadFromFile file
-                                                                                   val results = ConnectivityTest.testConnectivity(s => (), i => ())
-                                                                                   if (results.percentConnected != 100)
-                                                                                    throw new RuntimeException(file+": "+results) }
-                    true } }
+ def test: Boolean = {
+  for (file <- new File("datafiles/fullyconnected").listFiles) {
+   implicit val network = new Network
+   network loadFromFile file
+   val results = ConnectivityTest.testConnectivity(s => (), i => ())
+   if (results.percentConnected != 100) {
+    println(file+": "+results)
+    return false } }
+  true } }
 
 object PingerTest {
  def apply = {
@@ -95,11 +98,12 @@ object RoutingLoopTest {
                                                                       results.size == 1 && results.head.ttlExpired } ) } }
 
 object UnconnectedFilesTest {
- def apply = { for (file <- new File("datafiles/unconnected").listFiles) { implicit val network = new Network
+ def apply: Boolean = { for (file <- new File("datafiles/unconnected").listFiles) { implicit val network = new Network
                                                                            network loadFromFile file
                                                                            val results = ConnectivityTest.testConnectivity(s => (), i => ())
                                                                            if (results.percentConnected != 100)
-                                                                            throw new RuntimeException(file.toString) }
+                                                                            println(file.toString)
+                                                                            return false}
                true } }
 
 import ipsim.awt.Point
@@ -161,4 +165,4 @@ object RemoteBroadcastBug { def apply = { implicit val network = new Network
                                           network loadFromFile new File("datafiles/fullyconnected/101.ipsim")
                                           val ip41 = IPAddress.valueOf("146.87.4.1").get
                                           val results = testPing(IPAddress.valueOf("146.87.1.1").get, IPAddress.valueOf("146.87.4.255").get)
-                                          results(0).pingReplyReceived && results(0).replyingHost.ipAddress == ip41 && results.size==1 } }
+                                          results.size == 1 && results(0).pingReplyReceived && results(0).replyingHost.ipAddress == ip41 } }

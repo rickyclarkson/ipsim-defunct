@@ -32,18 +32,17 @@ object RunTests extends Application {
 
  implicit def p1ToClosure(la: P1[java.lang.Boolean]): () => Boolean = new (() => Boolean) { def apply() = la._1.asInstanceOf[Boolean]
                                                                                                              override def toString = la.toString }
- val results=List[() => Boolean](//Computer.testLoadingRestoresBigPipeIcon,
+ val results=List[() => Boolean](Computer.testLoadingRestoresBigPipeIcon,
                                  Computer.testLoadingGivesRightNumberOfComponents,
                                  XMLSerialisationTest.testComputerIPForwarding,                 
                                  PositionTest.testRetention, PositionTest.cableWithTwoEnds, PositionTest.setParentTwice,
                                  PositionTest.testRetention2,
                                  Collections.testAddCollection,
-                                 XMLSerialisationTest.testComputerIPForwarding,
                                  testG,
                                  CableTest.testCableWithNoParents,
                                  CableTest.testCable,
                                  BugzillaBug18.test,
-                                 FullyConnectedFilesTest.test,
+                                 FullyConnectedFilesTest.test _,
                                  ComputerArpIncomingTest.test,
                                  () => testRetention,
                                  () => testGetBroadcastRoute,

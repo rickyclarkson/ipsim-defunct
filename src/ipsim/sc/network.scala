@@ -138,7 +138,6 @@ object NetMask {
  implicit def netMask2Int(netMask: NetMask)=netMask.rawValue }
 
 import NetMask.netMask2Int
-import IPAddress.ipAddress2Int
 
 case class NetBlock(val networkNumber: IPAddress, val netMask: NetMask) {
  if (networkNumber.rawValue != (networkNumber.rawValue & netMask.rawValue))
@@ -270,8 +269,8 @@ object Computer {
  import ipsim.qc.QuickCheck.check
  def testLoadingRestoresBigPipeIcon()(implicit random: Random) = check(Network.arbitraryNetwork(_), { network: Network => 
   def numISPs(network: Network) = (network.all flatMap(_.asComputer) filter (_.isISP)).toList.size
-  println("Doing")
-  numISPs(network)==numISPs(network.loadFromString(network.saveToString)) } )
+  numISPs(network)==numISPs(network.loadFromString(network.saveToString))
+} )
  def arbitraryComputer(implicit random: Random) = Computer(arbitraryPoint) }
 
 case class Hub(position: Point) extends PacketSource(List(Left(position)), Nil, Nil) {
@@ -324,7 +323,7 @@ object Card {
   def construct = Some(Stream(Card(false, Left(Point.origin))))
   val identifier = "ipsim.persistence.delegates.EthernetCardDelegate" } }
                                                           
-case class CardDrivers(var ipAddress: IPAddress, var netMask: NetMask, var ethNumber: Int) { def netBlock = NetBlock(ipAddress, netMask)
+case class CardDrivers(var ipAddress: IPAddress, var netMask: NetMask, var ethNumber: Int) { def netBlock = NetBlock(IPAddress(ipAddress & netMask), netMask)
                                                                                              def toRoute = Route(netBlock, ipAddress) }
 
 case class Cable(from: Either[Point, PacketSource], to: Either[Point, PacketSource]) extends PacketSource(List(from, to), Nil, Nil) {
@@ -429,7 +428,7 @@ class Network {
  val ispContext = new NetworkContext
  var testName: Option[String] = None
  def all = { val result = mutable.HashSet[PacketSource]()
-             for (c <- Stream.cons(ispContext, contexts.stream)) for (d <- c.visibleComponentsVar) result+=d
+             for (c <- Stream.cons(ispContext, contexts.stream)) { for (d <- c.visibleComponentsVar) result+=d }
              result.toList }
  def cards = all flatMap (_.asCard)
  def cardDrivers(computer: Computer) = Positions.children(all, computer) flatMap (_.asCard) flatMap (_.cardDrivers)
@@ -485,7 +484,7 @@ class Network {
                    case Some(problem) => { val networkContext = new NetworkContext
                                            networkContext.problem = Some(problem)
                                            contexts.append(networkContext) } }
-   ispContext.visibleComponentsVar = deserialiser.readObject(node, "ispContext", NetworkContext.delegate).get.visibleComponentsVar
+   deserialiser.readObject(node, "ispContext", NetworkContext.delegate).foreach(x => ispContext.visibleComponentsVar = x.visibleComponentsVar)
 
    for (name <- deserialiser.getObjectNames(node); if name.startsWith("child ")) {
     val component = DelegateHelper.readFromDeserialiser(deserialiser, node, name)
@@ -493,7 +492,7 @@ class Network {
      var components=contexts.stream(0).visibleComponentsVar
      components = components.prependIfNotPresent(component.head)
      contexts.stream(0).visibleComponentsVar = contexts.stream(0).visibleComponentsVar merge component.toList } else throw null }
-   log = deserialiser.readObject(node, "log", logDelegate).get
+   deserialiser.readObject(node, "log", logDelegate).foreach(log = _)
    modified = false
    Network.this }
   def construct = Some(Network.this)
@@ -554,7 +553,7 @@ object NetworkContext {
   val context=new NetworkContext
   if (random.nextInt(2) == 0)
    context.problem = Some(Problem.arbitraryProblem)
-  val numComponents = random nextInt 30
+  val numComponents = random nextInt 3
   context.visibleComponentsVar = (0 until numComponents map (ignored => PacketSource.arbitraryPacketSource)).toList
   context }
  def delegate(implicit network: Network) = new ReadDelegate[NetworkContext] with WriteDelegate[NetworkContext] {

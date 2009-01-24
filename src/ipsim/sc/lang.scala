@@ -9,7 +9,8 @@ case class StreamProperty[T](var stream: Stream[T]) {
 
  def prependIfNotPresent[U <: T](u: U) = { if (!stream.exists(_==u)) stream = Stream.cons(u, stream)
                                            u }
- def prepend[U <: T](u: U) = { stream = Stream.cons(u, stream)
+ def prepend[U <: T](u: U) = { val tmp = stream
+                               stream = Stream.cons(u, tmp)
                                u }
 
  def clear = stream = Stream.empty

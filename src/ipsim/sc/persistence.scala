@@ -14,7 +14,7 @@ case class XMLDeserialiser(private[persistence] input: Document) {
 
  def readObject[T](delegate: ReadDelegate[T]): Option[T] = readObject(DOMSimple.getChildElementNode(input, "object"), delegate)
  def readObject[T](node: Node, name: String, delegate: ReadDelegate[T]): Option[T] = {
-  (for (node2 <- DOMSimple.getChildNodes(node, "object").toStream; if getAttribute(node2, "name")==name) yield readObject(node2, delegate))(0)
+  (for (node2 <- DOMSimple.getChildNodes(node, "object").toStream; if getAttribute(node2, "name")==name) yield readObject(node2, delegate)).flatMap(x => x).firstOption
  }
  def readObject[T](node: Node, delegate: ReadDelegate[T]): Option[T] = {
   val id = Integer.parseInt(getAttribute(node, "id").get)
@@ -26,7 +26,7 @@ case class XMLDeserialiser(private[persistence] input: Document) {
                                              Some(obj2) } } }
  def readAttribute(node: Node, name: String): Option[String] = DOMSimple.getChildNodes(node, "attribute").toStream flatMap (element =>
   if (getAttribute(element, "name") == Some(name)) getAttribute(element, "value") else None) firstOption
- def getObjectNames(node: Node): Iterable[String] = DOMSimple.getChildNodes(node, "object") map (readAttribute(_, "name").get)
+ def getObjectNames(node: Node): Iterable[String] = DOMSimple.getChildNodes(node, "object") flatMap (readAttribute(_, "name"))
  def typeOfChild(node: Node, name: String) = DOMSimple.getChildNodes(node, "object").toStream filter(getAttribute(_, "name") == name) head }
 
 trait ReadDelegate[T] { def construct: Option[T]
