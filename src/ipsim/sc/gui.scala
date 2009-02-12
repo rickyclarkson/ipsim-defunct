@@ -904,7 +904,7 @@ object AddDefaultRouteDialogUtility { def newInstance(computer: Computer)(implic
  okButton listener { val zero = NetBlock.zero
                      val ipAddress = ipAddressTextField.ipAddress
                      if (computer isLocallyReachable ipAddress) { val route = Route(zero, ipAddress)
-                                                                  computer.routingTable add (Some(computer), route)
+                                                                  computer.routingTable add route
                                                                   network.log ++= List("Added a default route to "+computer+" of "+ipAddress+'.')
                                                                   network.modified = true
                                                                   dialog setVisible false
@@ -950,7 +950,7 @@ object RoutingTableEntryEditDialog {
     val newEntry = RouteInfo(NetBlock(networkNumber, netMask), ipAddressTextField.ipAddress)
     val realEntry = Route(newEntry.destination, newEntry.gateway)
     realRoute.fold( {
-     computer.routingTable add (Some(computer), realEntry)
+     computer.routingTable add realEntry
      network.log = network.log ++ List("Added an explicit route to " + computer + " to get to the " + entry1.destination.asCustomString + "network, via the "
                                   + entry1.gateway + " gateway.") },
                     route => { val previous = RouteInfo(route.netBlock, route.gateway)

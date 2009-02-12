@@ -12,7 +12,7 @@ import ipsim.io.IOUtility
 import java.io.File
 import javax.swing.{JFrame, JOptionPane}
 import ipsim.network.route.{RoutingTable, Route}
-import ipsim.persistence.{XMLSerialiser, ReadDelegate, WriteDelegate}
+import ipsim.persistence.{XMLSerialiser, Serial}
 import org.w3c.dom.Node
 
 import ipsim.gui.GetChildOffset
@@ -78,6 +78,8 @@ case class Problem(val netBlock: NetBlock, val numberOfSubnets: Int) {
   if (length<0) throw null
   else "Network number: "+netBlock.networkNumber+'/'+length+" Number of subnets: "+numberOfSubnets } }
 
+import scala.xml._
+
 object Problem {
  import ProblemConstants._
  def arbitraryProblem(implicit random: Random)=Problem(NetBlock.arbitraryNetBlock, random.nextInt(MAX_SUBNETS-MIN_SUBNETS+1)+MIN_SUBNETS)
@@ -91,14 +93,14 @@ object Problem {
  def generateNetworkNumber(random: Random,prefixLength: Int) = tryTimes(1000) {
   new IPAddress(random.nextInt(Integer.MAX_VALUE) << (32-prefixLength)) match { case result => if (!isValidNetworkNumber(result)) None else
    if (isReservedNetworkNumber(NetBlock(result,NetMask.fromPrefixLength(prefixLength) get))) None else Some(result) } }
- object delegate extends ReadDelegate[Problem] with WriteDelegate[Problem] {
-  def writeXML(serialiser: XMLSerialiser, problem: Problem) = { serialiser.writeAttribute("networkNumber", problem.netBlock.networkNumber.toString)
-                                                                serialiser.writeAttribute("subnetMask", problem.netBlock.netMask.toString)
-                                                                serialiser.writeAttribute("numberOfSubnets", String.valueOf(problem.numberOfSubnets)) }
-  def readXML(deserialiser: XMLDeserialiser, node: Node, ignored: Option[Problem]) = {
-   import deserialiser.readAttribute
-   Problem(NetBlock(IPAddress.valueOf(readAttribute(node, "networkNumber").get).get, NetMask.valueOf(readAttribute(node, "subnetMask").get).get),
-           Integer.parseInt(readAttribute(node, "numberOfSubnets").get)) }
+ object delegate extends Serial[Problem] {
+  def toXML(problem: Problem) = serialiser => serialiser -> { <object> <attribute name="networkNumber" value={problem.netBlock.networkNumber.toString}/>
+                                                                       <attribute name="subnetMask" value={problem.netBlock.netMask.toString}/>
+                                                                       <attribute name="numberOfSubnets" value={problem.numberOfSubnets.toString}/> </object> }
+
+  def fromXML(elem: Elem) = deserialiser => deserialiser -> Problem(NetBlock(IPAddress.valueOf(((elem \ "attribute") filter (_.asInstanceOf[Elem] \ "@name" == "networkNumber")) \ "@value" toString).get,
+                                                                             NetMask.valueOf((elem \ "attribute" filter (_ \ "@name" == "netMask")).first.toString).get),
+                                                                    Integer.parseInt((elem \ "attribute" filter (_ \ "@name" == "numberOfSubnets")).first.toString))
   def construct = None
   def identifier = "ipsim.persistence.delegates.ProblemDelegate" } }
                                                                                 
@@ -150,6 +152,10 @@ case class NetBlock(val networkNumber: IPAddress, val netMask: NetMask) {
  lazy val isZero = networkNumber.isZero
  def asCustomString = netMask.prefixLength match { case length => networkNumber+"/"+(if (length == -1) netMask else length) } }
  
+import scala.xml._
+
+import ipsim.persistence.Implicits._
+
 object NetBlock {
  def zero=NetBlock(IPAddress(0),NetMask.netMask(0).get)
  def arbitraryNetBlock(implicit random: Random) = {
@@ -162,12 +168,11 @@ object NetBlock {
   if (tempMask>32) None else {
    val netMask=NetMask.fromPrefixLength(tempMask).get
    if ((netNum & ~netMask)!=0) None else Some(NetBlock(netNum,netMask)) } }
- object delegate extends ReadDelegate[NetBlock] with WriteDelegate[NetBlock] {
-  def writeXML(serialiser: XMLSerialiser, netBlock: NetBlock) = { serialiser.writeAttribute("netmask", netBlock.netMask.toString)
-                                                                  serialiser.writeAttribute("networkNumber", netBlock.networkNumber.toString) }
-  def readXML(deserialiser: XMLDeserialiser, node: Node, ignored: Option[NetBlock]) = {
-   val netMask = NetMask.valueOf(deserialiser.readAttribute(node, "netmask").get).get
-   NetBlock(IPAddress(IPAddress.valueOf(deserialiser.readAttribute(node, "networkNumber").get).get & netMask), netMask) }
+ implicit val delegate: Serial[NetBlock] = new Serial[NetBlock] {
+  def toXML(netBlock: NetBlock) = serialiser => serialiser -> <object> <attribute name="netmask" value={netBlock.netMask.toString}/> <attribute name="networkNumber" value={netBlock.networkNumber.toString}/> </object>
+  def fromXML(elem: Elem) = _ -> { val netMask = NetMask.valueOf(elem /@ "netmask").get
+                                   NetBlock(IPAddress(IPAddress.valueOf(elem /@ "networkNumber").get & netMask), netMask) }
+
   val construct = null
   val identifier = "ipsim.persistence.delegates.NetBlockDelegate" } }
 
@@ -236,35 +241,46 @@ case class Computer(position: Point) extends PacketSource(List(Left(position)),L
    !card.ipAddress.isZero && card.netBlock.contains(ip)).map(_.toRoute) orElse routingTable.routes.find(_.netBlock contains ip)
  def firstAvailableEthNumber(implicit network: Network) = Stream from 0 find (a => !sortedCards.exists(a==_.ethNumber)) get
  def sortedCards(implicit network: Network) = children(network.all).flatMap(_.asCard).flatMap(_.withDrivers).toList.sort(_.ethNumber > _.ethNumber)
- def serialise(serialiser: XMLSerialiser, name: String)(implicit network: Network) = serialiser.writeObject(this, name, Computer.delegate)
  def ipAddresses(implicit network: Network) = cardsWithDrivers map (_.ipAddress)
  def isRouter(implicit network: Network) = ipAddresses.size>1 }
 
+import scala.xml._
+
 object Computer {
- def delegate(implicit network: Network) = new ReadDelegate[Stream[PacketSource]] with WriteDelegate[Computer] {
-  def writeXML(serialiser: XMLSerialiser, computer: Computer) = {
-   for (p <- List("ipForwardingEnabled" -> computer.ipForwardingEnabled.toString,
-                  "computerId" -> computer.computerID.toString,
-                  "isISP" -> computer.isISP.toString))
-    serialiser.writeAttribute(p._1, p._2)
-   DelegateHelper.writePositions(serialiser, computer)
-   serialiser.writeObject(computer.routingTable, "routingTable", RoutingTable.delegate) }
-  def readXML(deserialiser: XMLDeserialiser, node: Node, andOthers: Option[Stream[PacketSource]]) = {
+ object delegate extends Serial[Computer] {
+  def toXML(computer: Computer) = originalSerialiser => {
+   var serialiser = originalSerialiser
+   <object>
+    <attribute name="ipForwardingEnabled" value={computer.ipForwardingEnabled.toString}/>
+    <attribute name="computerId" value={computer.computerID.toString}/>
+    <attribute name="isISP" value={computer.isISP.toString}/>
+    { DelegateHelper.positionsToXML(computer)(originalSerialiser) match { case (s, nodes) => {
+     serialiser = s
+     nodes } } }
+    { serialiser.toXML(computer.routingTable, "routingTable") match { case (s, nodes) => {
+     serialiser = s
+     nodes } } }
+   </object> match { case elem => serialiser -> elem }
+  }
+
+  def fromXML(elem: Elem) = Computer(
+  def readXML(deserialiser: XMLDeserialiser, elem: Elem, andOthers: Option[Stream[PacketSource]]) = {
    val computer = andOthers.get.head.asComputer.get
-   computer.ipForwardingEnabled = deserialiser.readAttribute(node, "ipForwardingEnabled").get.toBoolean
-   computer.computerID = deserialiser.readAttribute(node, "computerID") match { case Some(s) => s.toInt
-                                                                   case None => network.generateComputerID }
-   computer.isISP = deserialiser.readAttribute(node, "isISP") map (_.toBoolean) getOrElse false
-   val ret = ipsim.lang.RichStream(andOthers.get).merge(DelegateHelper.readPositions(deserialiser, node, computer))
-   for (route <- deserialiser.readObject(node, "routingTable", RoutingTable.delegate).get.routes)
+   computer.ipForwardingEnabled = deserialiser.readAttribute(elem, "ipForwardingEnabled").get.toBoolean
+   computer.computerID = deserialiser.readAttribute(elem, "computerID") match { case Some(s) => s.toInt
+                                                                                case None => network.generateComputerID }
+   computer.isISP = deserialiser.readAttribute(elem, "isISP") map (_.toBoolean) getOrElse false
+   val ret = ipsim.lang.RichStream(andOthers.get).merge(DelegateHelper.readPositions(deserialiser, elem, computer))
+   for (route <- deserialiser.readObject(elem, "routingTable", RoutingTable.delegate).get.routes)
     computer.routingTable.add(None, route)
    ret.toStream }
   def construct = Some(Stream(Computer(Point.origin)))
   val identifier = "ipsim.persistence.delegates.ComputerDelegate" }
 
- def testLoadingGivesRightNumberOfComponents = () => {
-  new Network().loadFromFile(new File("datafiles/unconnected/hubdisabled.ipsim")) match {
-   case network => network.all.size==7 && network.contexts.stream.head.visibleComponentsVar.size==7 } }
+ def testLoadingGivesRightNumberOfComponents = {
+  val network = new Network().loadFromFile(new File("datafiles/unconnected/hubdisabled.ipsim"))
+  if (true) throw new RuntimeException("" + network.all.size) 
+  network.all.size==7 && network.contexts.stream.head.visibleComponentsVar.size==7 }
 
  import ipsim.qc.QuickCheck.check
  def testLoadingRestoresBigPipeIcon()(implicit random: Random) = check(Network.arbitraryNetwork(_), { network: Network => 
@@ -306,16 +322,16 @@ object Card {
      serialiser.writeAttribute("ipAddress", drivers.ipAddress.toString)
      serialiser.writeAttribute("netMask", drivers.netMask.toString) } case None => () }
    DelegateHelper.writePositions(serialiser, card) then serialiser }
-  def readXML(deserialiser: XMLDeserialiser, node: Node, andOthers: Option[Stream[PacketSource]]): Stream[PacketSource] = {
+  def readXML(deserialiser: XMLDeserialiser, elem: Elem, andOthers: Option[Stream[PacketSource]]): Stream[PacketSource] = {
    val card=andOthers.get.head.asCard.get
-   val ret = RichStream(andOthers.get).merge(DelegateHelper.readPositions(deserialiser, node, card))
-   deserialiser.readAttribute(node, "ethNumber").map(_.toInt) match {
+   val ret = RichStream(andOthers.get).merge(DelegateHelper.readPositions(deserialiser, elem, card))
+   deserialiser.readAttribute(elem, "ethNumber").map(_.toInt) match {
     case Some(ethNumber) => if (ethNumber != -1) card.installDeviceDrivers.ethNumber = ethNumber
     case None => () }
    card.withDrivers match {
     case Some(withDrivers) => {
-     withDrivers.ipAddress = IPAddress.valueOf(deserialiser.readAttribute(node, "ipAddress").get).get
-     var binaryMask = Integer.toBinaryString(IPAddress.valueOf(deserialiser.readAttribute(node, "netMask").get).get.rawValue)
+     withDrivers.ipAddress = IPAddress.valueOf(deserialiser.readAttribute(elem, "ipAddress").get).get
+     var binaryMask = Integer.toBinaryString(IPAddress.valueOf(deserialiser.readAttribute(elem, "netMask").get).get.rawValue)
      while (binaryMask contains "01") binaryMask=binaryMask.replaceAll("01", "00")
      withDrivers.netMask = NetMask.netMask(java.lang.Long.parseLong(binaryMask, 2).toInt).get }
     case None => () }
@@ -329,7 +345,6 @@ case class CardDrivers(var ipAddress: IPAddress, var netMask: NetMask, var ethNu
 case class Cable(from: Either[Point, PacketSource], to: Either[Point, PacketSource]) extends PacketSource(List(from, to), Nil, Nil) {
  var cableType: CableType = straightThrough
  def otherEnd(p: PacketSource) = (parents - p) firstOption
- def serialise(serialiser: XMLSerialiser, name: String)(implicit network: Network) = serialiser.writeObject(this, name, Cable.delegate)
  override def asCable = Some(this)
  def canTransferPackets = if (parents.size == 2) cableType.canTransferPackets(parents(0), parents(1)) else false
  def fold[T](card: Card => T, computer: Computer => T, cable: Cable => T, hub: Hub => T) = cable(this) }
@@ -339,10 +354,10 @@ object Cable {
  def delegate(implicit network: Network) = new ReadDelegate[Stream[PacketSource]] with WriteDelegate[Cable] {
   def writeXML(serialiser: XMLSerialiser, cable: Cable) = { DelegateHelper.writePositions(serialiser, cable)
                                                             serialiser.writeAttribute("cableType", cable.cableType.toString) }
-  def readXML(deserialiser: XMLDeserialiser, node: Node, andOthers: Option[Stream[PacketSource]]) = {
+  def readXML(deserialiser: XMLDeserialiser, elem: Elem, andOthers: Option[Stream[PacketSource]]) = {
    val cable = andOthers.get.head.asCable.get
-   val ret = RichStream(andOthers.get).merge(DelegateHelper.readPositions(deserialiser, node, cable))
-   cable.cableType = deserialiser.readAttribute(node, "cableType") match { case None => straightThrough
+   val ret = RichStream(andOthers.get).merge(DelegateHelper.readPositions(deserialiser, elem, cable))
+   cable.cableType = deserialiser.readAttribute(elem, "cableType") match { case None => straightThrough
                                                                            case Some(t) => if (t == crossover.toString) crossover else
                                                                             if (t == straightThrough.toString) straightThrough else
                                                                              if (t == broken.toString) broken else throw null }
@@ -365,10 +380,10 @@ object Hub {
  def delegate(implicit network: Network) = new ReadDelegate[Stream[PacketSource]] with WriteDelegate[Hub] {
   def writeXML(serialiser: XMLSerialiser, hub: Hub) = { serialiser.writeAttribute("isPowerOn", String.valueOf(hub.power))
                                                         DelegateHelper.writePositions(serialiser, hub) then serialiser }
-  def readXML(deserialiser: XMLDeserialiser, node: Node, hubAndOthers: Option[Stream[PacketSource]]) = {
+  def readXML(deserialiser: XMLDeserialiser, elem: Elem, hubAndOthers: Option[Stream[PacketSource]]) = {
    val hub = hubAndOthers.get.head.asHub.get
-   deserialiser.readAttribute(node, "isPowerOn") foreach (s => hub.power = s.toBoolean)
-   val otherStream=DelegateHelper.readPositions(deserialiser, node, hub).toStream
+   deserialiser.readAttribute(elem, "isPowerOn") foreach (s => hub.power = s.toBoolean)
+   val otherStream=DelegateHelper.readPositions(deserialiser, elem, hub).toStream
    RichStream(hubAndOthers.get).merge(otherStream).toStream }
   def construct = Some(Stream(Hub(Point(200, 200))))
   val identifier = "ipsim.persistence.delegates.HubDelegate" } }
@@ -399,6 +414,20 @@ class ArpTable {
  def hasEntryFor(ip: IPAddress) = map.contains(ip) & !map.get(ip).get.dead }
 
 import ipsim.lang.Unique
+
+object Debug {
+ def toXML(node: Node) = {
+  import java.io._
+  import org.w3c.dom._
+  import javax.xml._
+  import javax.xml.transform._
+  import javax.xml.transform.dom._
+  import javax.xml.transform.stream._
+  val writer = new StringWriter
+  TransformerFactory.newInstance().newTransformer().transform(new DOMSource(node), new StreamResult(writer))
+  writer.toString
+ }
+}
 
 class Network {
  implicit val _ = this
@@ -445,13 +474,13 @@ class Network {
                  this } }
 
  def loadFromString(xmlString: String) = { clearAll
-                                           XMLDeserialiser.fromString(xmlString) foreach (deserialiser => { nextComputerID = 200
-                                                                                                            deserialiser.readObject(delegate) } )
+                                           nextComputerID = 200
+                                           XMLDeserialiser.fromString(xmlString)
                                            this }
 
  import java.io.{StringWriter, Writer}
  def saveToString = saveToWriter(new StringWriter).toString
- def saveToWriter(writer: Writer) = Network.saveObjectToWriter(writer, this, delegate)
+ def saveToWriter(writer: Writer) = Network.saveToWriter(writer, this)
  def saveToFile(filename: File) =
   if (filename.getName startsWith "@") {
    val stringWriter = new StringWriter
@@ -464,39 +493,6 @@ class Network {
                                          
  def clearAll = { for (context <- Stream.cons(ispContext,contexts.stream)) context.visibleComponentsVar = Nil
                   nextComputerID = 200 }
- object delegate extends ReadDelegate[Network] with WriteDelegate[Network] {
-  def writeXML(serialiser: XMLSerialiser, ignored: Network) = {
-   for ((context, a) <- contexts.stream.zip(Stream from 0)) serialiser.writeObject(context, "context "+a, NetworkContext.delegate)
-   serialiser.writeObject(ispContext, "ispContext", NetworkContext.delegate)
-   serialiser.writeObject(log, "log", logDelegate) }
-  def readXML(deserialiser: XMLDeserialiser, node: Node, ignored: Option[Network]) = {
-   contexts.clear
-   //single-network files generated by old versions will have a 'problem' here.  Newer versions have it in the NetworkContext.
-   //so if we find an old one, we need to create a NetworkContext for it and set the problem accordingly.  If a file has no problem and no
-   //NetworkContexts, create a new NetworkContext.
-   val problem = deserialiser.readObject(node, "problem", Problem.delegate)
-   problem match { case None => { var newFile = false
-                                  for (name <- new immutable.TreeSet[String]++deserialiser.getObjectNames(node); if name startsWith "context ") {
-                                   newFile = true
-                                   contexts.append(deserialiser.readObject(node, name, NetworkContext.delegate).get) }
-                                  if (contexts.isEmpty) { if (newFile) throw null
-                                                          contexts.append(new NetworkContext) } }
-                   case Some(problem) => { val networkContext = new NetworkContext
-                                           networkContext.problem = Some(problem)
-                                           contexts.append(networkContext) } }
-   deserialiser.readObject(node, "ispContext", NetworkContext.delegate).foreach(x => ispContext.visibleComponentsVar = x.visibleComponentsVar)
-
-   for (name <- deserialiser.getObjectNames(node); if name.startsWith("child ")) {
-    val component = DelegateHelper.readFromDeserialiser(deserialiser, node, name)
-    if (contexts.size==1) {
-     var components=contexts.stream(0).visibleComponentsVar
-     components = components.prependIfNotPresent(component.head)
-     contexts.stream(0).visibleComponentsVar = contexts.stream(0).visibleComponentsVar merge component.toList } else throw null }
-   deserialiser.readObject(node, "log", logDelegate).foreach(log = _)
-   modified = false
-   Network.this }
-  def construct = Some(Network.this)
-  def identifier = "ipsim.persistence.delegates.NetworkDelegate" }
 
  def depthFirstIterable: Iterable[PacketSource] = Trees.depthFirstIterable(Trees.nodify(topLevelComponents))
 
@@ -509,19 +505,58 @@ class Network {
 object logDelegate extends ReadDelegate[List[String]] with WriteDelegate[List[String]] {
  def writeXML(serialiser: XMLSerialiser, log: List[String]) =
   (for ((entry, a) <- log.zipWithIndex) serialiser.writeObject(entry, "entry "+a, defaultCommandDelegate)) then serialiser
- def readXML(deserialiser: XMLDeserialiser, node: Node, ignored: Option[List[String]]) =
-  deserialiser.getObjectNames(node) filter (_ startsWith "entry ") map (name => deserialiser.readObject(node, name, defaultCommandDelegate).get) toList
+ def readXML(deserialiser: XMLDeserialiser, elem: Elem, ignored: Option[List[String]]) =
+  deserialiser.getObjectNames(elem) filter (_ startsWith "entry ") map (name => deserialiser.readObject(elem, name, defaultCommandDelegate).get) toList
  val construct = None
  val identifier = "ipsim.persistence.delegates.LogDelegate" }
 
 object defaultCommandDelegate extends ReadDelegate[String] with WriteDelegate[String] {
  def writeXML(serialiser: XMLSerialiser, s: String) = serialiser.writeAttribute("value", s)
- def readXML(deserialiser: XMLDeserialiser, node: Node, ignored: Option[String]) =
-  deserialiser.readAttribute(node, "description").getOrElse(deserialiser.readAttribute(node, "value").get)
+ def readXML(deserialiser: XMLDeserialiser, elem: Elem, ignored: Option[String]) =
+  deserialiser.readAttribute(elem, "description").getOrElse(deserialiser.readAttribute(elem, "value").get)
  val construct = None
  val identifier = "ipsim.persistence.delegates.DefaultCommandDelegate" }
 
 object Network {
+ object serial extends Serial[Network] {
+  def writeXML(serialiser: XMLSerialiser, ignored: Network) = {
+   for ((context, a) <- contexts.stream.zip(Stream from 0)) serialiser.writeObject(context, "context "+a, NetworkContext.delegate)
+   serialiser.writeObject(ispContext, "ispContext", NetworkContext.delegate)
+   serialiser.writeObject(log, "log", logDelegate) }
+  def readXML(deserialiser: XMLDeserialiser, elem: Elem, ignored: Option[Network]) = {
+   contexts.clear
+   //single-network files generated by old versions will have a 'problem' here.  Newer versions have it in the NetworkContext.
+   //so if we find an old one, we need to create a NetworkContext for it and set the problem accordingly.  If a file has no problem and no
+   //NetworkContexts, create a new NetworkContext.
+   val problem = deserialiser.readObject(elem, "problem", Problem.delegate)
+   problem match { case None => { println("No top-level problem found")
+                                  var newFile = false
+                                  for (name <- new immutable.TreeSet[String]++deserialiser.getObjectNames(elem); if name startsWith "context ") {
+                                   newFile = true
+                                   contexts.append(deserialiser.readObject(elem, name, NetworkContext.delegate).get) }
+                                  if (contexts.isEmpty) { if (newFile) throw null
+                                                          contexts.append(new NetworkContext) } }
+                   case Some(problem) => { println("A top-level problem found")
+                                           val networkContext = new NetworkContext
+                                           networkContext.problem = Some(problem)
+                                           contexts.append(networkContext) } }
+   deserialiser.readObject(elem, "ispContext", NetworkContext.delegate).foreach(x => ispContext.visibleComponentsVar = x.visibleComponentsVar)
+
+   println("objectnames: "+deserialiser.getObjectNames(elem).toList)
+
+   for (name <- deserialiser.getObjectNames(elem); if name.startsWith("child ")) {
+    println("Found "+name)
+    val component = DelegateHelper.readFromDeserialiser(deserialiser, elem, name)
+    if (contexts.size==1) {
+     var components=contexts.stream(0).visibleComponentsVar
+     components = components.prependIfNotPresent(component.head)
+     contexts.stream(0).visibleComponentsVar = contexts.stream(0).visibleComponentsVar merge component.toList } else throw null }
+   deserialiser.readObject(elem, "log", logDelegate).foreach(log = _)
+   modified = false
+   Network.this }
+  def construct = Some(Network.this)
+  def identifier = "ipsim.persistence.delegates.NetworkDelegate" }
+
  def idFactory[T] = new Function1[T, Int] { val ids: mutable.Map[Int, T] = new mutable.HashMap
                                             def apply(t: T): Int = ids.find(_._2==t) match { case Some(e) => e._1
                                                                                              case None => {
@@ -537,8 +572,10 @@ object Network {
   Stream.cons(network,arbitraryNetwork) }
 
  import java.io.Writer
- def saveObjectToWriter[T <: AnyRef](writer: Writer, obj: T, delegate: WriteDelegate[T]) =
-  new XMLSerialiser(writer).writeObject(obj, "network", delegate).close }
+ import Network.serial
+ def saveToWriter(writer: Writer, network: Network) =
+  XML.write(writer, XMLSerialiser().toXML(network, "network")(serial)._2, "UTF-8", true, null)
+}
 
 class NetworkContext {
  var visibleComponentsVar: List[PacketSource] = Nil
@@ -562,11 +599,10 @@ object NetworkContext {
                            case _ => () }
    (for ((component, a) <- context.visibleComponentsVar.zipWithIndex)
     DelegateHelper.writePacketSource(serialiser, component, "visibleComponent "+a)) then serialiser }
-  def readXML(deserialiser: XMLDeserialiser, node: Node, andOthers: Option[NetworkContext]) = {
-   andOthers.get.problem = deserialiser.readObject(node, "problem", Problem.delegate)
-   for (name <- deserialiser.getObjectNames(node); if name startsWith "visibleComponent ")
-    andOthers.get.visibleComponentsVar = andOthers.get.visibleComponentsVar prependIfNotPresent DelegateHelper.readFromDeserialiser(deserialiser, node,
-                                                                                                                                    name).head
+  def readXML(deserialiser: XMLDeserialiser, elem: Elem, andOthers: Option[NetworkContext]) = {
+   andOthers.get.problem = deserialiser.readObject(elem, "problem", Problem.delegate)
+   for (name <- deserialiser.getObjectNames(elem); if name startsWith "visibleComponent ")
+    andOthers.get.visibleComponentsVar = andOthers.get.visibleComponentsVar prependIfNotPresent DelegateHelper.readFromDeserialiser(deserialiser, elem, name).head
    andOthers.get }
   def construct = Some(new NetworkContext)
   def identifier = "NetworkContext" }
@@ -595,34 +631,47 @@ object Positions {
  def position(positionOrParent: Either[Point, PacketSource], component: PacketSource)(implicit network: Network) =
   positionOrParent.fold(pos => pos, (parent => GetChildOffset.getChildOffset(parent, component) + parent.positions(0).left.get))
  def positions(component: PacketSource)(implicit network: Network) = component.positions map (p => position(p, component)) }
+
+import scala.collection.mutable.ListBuffer
                                                                   
 object DelegateHelper {
+ def positionsToXML(component: PacketSource): XMLSerialiser => (XMLSerialiser, Seq[Node]) = originalSerialiser => {
+  var serialiser = originalSerialiser
+  var nodes = new ListBuffer[Node]
+  for ((packetSource, a) <- component.children.zipWithIndex)
+   serialiser.toXML(packetSource, "child "+a) match { case (s, node) => {
+    serialiser = s
+    nodes += node
+   } }
+  serialiser -> nodes.toList
+ }
+
  def writePositions(serialiser: XMLSerialiser, component: PacketSource)(implicit network: Network) = {
   for ((packetSource, a) <- Positions.children(network.all, component).toStream.zip(Stream from 0))
    writePacketSource(serialiser, packetSource, "child "+a)
   for ((pos, b) <- component.positions.toStream.zip(Stream from 0))
    pos match { case Left(position) => serialiser.writeObject(position, "point "+b, Point.delegate)
                case Right(parent) => writePacketSource(serialiser, parent, "parent "+b) } }
- def readPositions(deserialiser: XMLDeserialiser, node: Node, packetSource: PacketSource)(implicit network: Network): Stream[PacketSource] = {
+ def readPositions(deserialiser: XMLDeserialiser, elem: Elem, packetSource: PacketSource)(implicit network: Network): Stream[PacketSource] = {
   var andOthers: Stream[PacketSource] = Stream.empty
-  for (nodeName <- deserialiser.getObjectNames(node); if nodeName startsWith "parent ") {
+  for (nodeName <- deserialiser.getObjectNames(elem); if nodeName startsWith "parent ") {
    val a=Integer.parseInt(nodeName.substring("parent ".length))
-   val parent = readFromDeserialiser(deserialiser, node, nodeName)
+   val parent = readFromDeserialiser(deserialiser, elem, nodeName)
    andOthers=RichStream(andOthers).merge(parent).toStream
    packetSource.positions=packetSource.positions.set(a, Right(parent.head))
    if (nodeName startsWith "point ") {
     val string = nodeName.substring("point ".length)
     val a = Integer.parseInt(string)
-    packetSource.positions = packetSource.positions.set(a, Left(deserialiser.readObject(node, nodeName, Point.delegate).get)) }
+    packetSource.positions = packetSource.positions.set(a, Left(deserialiser.readObject(elem, nodeName, Point.delegate).get)) }
    if (nodeName startsWith "child ")
-    andOthers = andOthers merge readFromDeserialiser(deserialiser, node, nodeName) toStream }
+    andOthers = andOthers merge readFromDeserialiser(deserialiser, elem, nodeName) toStream }
   andOthers }
- def readFromDeserialiser(deserialiser: XMLDeserialiser, node: Node, name: String)(implicit network: Network): Stream[PacketSource] = {
-  val ident=deserialiser.typeOfChild(node, name)
-  (if (Hub.delegate.identifier == ident) deserialiser.readObject(node, name, Hub.delegate) else
-   if (Computer.delegate.identifier == ident) deserialiser.readObject(node, name, Computer.delegate) else
-    if (Cable.delegate.identifier == ident) deserialiser.readObject(node, name, Cable.delegate) else
-     if (Card.delegate.identifier == ident) deserialiser.readObject(node, name, Card.delegate) else throw null).get }
+ def readFromDeserialiser(deserialiser: XMLDeserialiser, elem: Elem, name: String)(implicit network: Network): Stream[PacketSource] = {
+  val ident=deserialiser.typeOfChild(elem, name)
+  (if (Hub.delegate.identifier == ident) deserialiser.readObject(elem, name, Hub.delegate) else
+   if (Computer.delegate.identifier == ident) deserialiser.readObject(elem, name, Computer.delegate) else
+    if (Cable.delegate.identifier == ident) deserialiser.readObject(elem, name, Cable.delegate) else
+     if (Card.delegate.identifier == ident) deserialiser.readObject(elem, name, Card.delegate) else throw null).get }
 
  def writePacketSource(serialiser: XMLSerialiser, packetSource: PacketSource, name: String)(implicit network: Network) = 
   packetSource.serialise(serialiser, name) }

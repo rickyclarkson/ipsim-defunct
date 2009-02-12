@@ -11,13 +11,13 @@ case class Point(x: Double, y: Double) { def +(other: Point) = Point(x+other.x, 
 object Point {
  def arbitraryPoint(implicit random: Random) = Point(random.nextInt(800)-400,random.nextInt(800)-400)
  val origin=Point(0,0)
- import ipsim.persistence.{ReadDelegate, WriteDelegate, XMLSerialiser, XMLDeserialiser}
+ import ipsim.persistence.{Serial, XMLSerialiser, XMLDeserialiser}
  import org.w3c.dom.Node
  object delegate extends ReadDelegate[Point] with WriteDelegate[Point] {
   def writeXML(serialiser: XMLSerialiser, point: Point) =
    serialiser.writeAttribute("x", String.valueOf(point.x)).writeAttribute("y", String.valueOf(point.y))
-  def readXML(deserialiser: XMLDeserialiser, node: Node, ignored: Option[Point]) = 
-   Point(java.lang.Double.parseDouble(deserialiser.readAttribute(node, "x").get), java.lang.Double.parseDouble(deserialiser.readAttribute(node, "y").get))
+  def readXML(deserialiser: XMLDeserialiser, elem: Elem, ignored: Option[Point]) = 
+   Point(java.lang.Double.parseDouble(deserialiser.readAttribute(elem, "x").get), java.lang.Double.parseDouble(deserialiser.readAttribute(elem, "y").get))
   def construct = Some(Point(0,0))
   val identifier = "ipsim.persistence.delegates.PointDelegate" } }
 

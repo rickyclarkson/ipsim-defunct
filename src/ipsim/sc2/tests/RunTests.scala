@@ -11,7 +11,7 @@ import ipsim.network.{PositionTest, InfiniteLoopBug}
 import ipsim.network.connectivity.FullyConnectedFilesTest
 import ipsim.network.connectivity.{ComputerArpIncomingTest, ComputerArpOutgoingTest, IncompleteArpTest}
 import ipsim.network.route.RoutingTableTests.{testRetention,testGetBroadcastRoute}
-import ipsim.network.route.{RoutingTableBugs, InvalidRouteTest}
+import ipsim.network.route.RoutingTableBugs
 import ipsim.network.connectivity.{BroadcastPingTest, RoutingLoopTest, PingerTest, UnconnectedFilesTest, ComputerArpIncomingTest, FullyConnectedFilesTest,
                                    RemoteBroadcastBug, ArpStoredFromForeignNetworkBug}
 import ipsim.network.ComputerTest.testCardIndexRetention
@@ -33,33 +33,32 @@ object RunTests extends Application {
  implicit def p1ToClosure(la: P1[java.lang.Boolean]): () => Boolean = new (() => Boolean) { def apply() = la._1.asInstanceOf[Boolean]
                                                                                                              override def toString = la.toString }
  val results=List[() => Boolean](Computer.testLoadingRestoresBigPipeIcon,
-                                 Computer.testLoadingGivesRightNumberOfComponents,
-                                 XMLSerialisationTest.testComputerIPForwarding,                 
+                                 Computer.testLoadingGivesRightNumberOfComponents _,
+//                                 XMLSerialisationTest.testComputerIPForwarding,                 
                                  PositionTest.testRetention, PositionTest.cableWithTwoEnds, PositionTest.setParentTwice,
                                  PositionTest.testRetention2,
                                  Collections.testAddCollection,
                                  testG,
                                  CableTest.testCableWithNoParents,
                                  CableTest.testCable,
-                                 BugzillaBug18.test,
-                                 FullyConnectedFilesTest.test _,
-                                 ComputerArpIncomingTest.test,
+  //                               BugzillaBug18.test,
+  //                               FullyConnectedFilesTest.test _,
+  //                               ComputerArpIncomingTest.test,
                                  () => testRetention,
                                  () => testGetBroadcastRoute,
-                                 () => RoutingTableBugs.apply,
-                                 () => InvalidRouteTest.apply,
-                                 () => BroadcastPingTest.apply,
+  //                               () => RoutingTableBugs.apply,                                 
+  //                               () => BroadcastPingTest.apply,
                                  ProblemTest.testInvalidNetMaskRejection,
                                  ProblemTest.test1,
-                                 () => RemoteBroadcastBug.apply,
+      //                           () => RemoteBroadcastBug.apply,
                                  () => ArpStoredFromForeignNetworkBug.apply,
                                  () => InfiniteLoopBug.apply,
-                                 ComputerArpOutgoingTest.test,
+        //                         ComputerArpOutgoingTest.test,
                                  () => testCardIndexRetention,
                                  () => RoutingLoopTest.apply,
                                  () => PingerTest.apply,
                                  TracerouteTest.apply _,
-                                 UnconnectedFilesTest.apply _,
-                                 IncompleteArpTest.apply _,
+          //                       UnconnectedFilesTest.apply _,
+            //                     IncompleteArpTest.apply _,
                                  testAddOrSet)
  println(results.map(x => { println(x); x() })) }

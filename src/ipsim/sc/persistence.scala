@@ -1,59 +1,53 @@
 package ipsim.persistence
 
-import ipsim.network.Network
-import org.w3c.dom.{Document, Node}
-import ipsim.xml.{DOMSimple, XMLUtility}
-import scala.collection.mutable
-import ipsim.lang.Implicits._
+import scala.collection.immutable.Map
+import scala.xml.{Elem, Node, XML}
 
-object XMLDeserialiser { def fromString(xml: String) = XMLUtility.xml2Dom(xml) map (doc => XMLDeserialiser(doc)) }
+case class RichNode(node: Node) {
+ def /@(name: String) = (node \ "attribute" filter (_ \ "@name" == name)) \ "@value" text match { case "" => throw null
+                                                                                                              case s => s }
+}
 
-case class XMLDeserialiser(private[persistence] input: Document) {
- import DOMSimple.getAttribute
- val objectsRead = new mutable.HashMap[Integer, Any]
+object Implicits {
+ implicit def node2RichNode(node: Node) = RichNode(node)
+}
 
- def readObject[T](delegate: ReadDelegate[T]): Option[T] = readObject(DOMSimple.getChildElementNode(input, "object"), delegate)
- def readObject[T](node: Node, name: String, delegate: ReadDelegate[T]): Option[T] = {
-  (for (node2 <- DOMSimple.getChildNodes(node, "object").toStream; if getAttribute(node2, "name")==name) yield readObject(node2, delegate)).flatMap(x => x).firstOption
+trait Serial[T] { def toXML(t: T): XMLSerialiser => (XMLSerialiser, Elem)
+                  def fromXML(elem: Elem): XMLDeserialiser => (XMLDeserialiser, T) }
+
+case class XMLSerialiser(alreadySeen: List[(Int, Any)]) {
+ def toXML[T](t: T, name: String)(implicit delegate: Serial[T]): (XMLSerialiser, Elem) = alreadySeen.find(_._2 == t) match {
+  case Some((id, _)) => this -> <object name={name} id={id.toString}> </object>
+  case _ => delegate.toXML(t)(this) match {
+   case (ser, <object>{rest @ _*}</object>) => val (newSer, id) = ser.newId(t)
+                                               newSer -> <object name={name} id={id.toString}> {rest} </object>
+  }
  }
- def readObject[T](node: Node, delegate: ReadDelegate[T]): Option[T] = {
-  val id = Integer.parseInt(getAttribute(node, "id").get)
-  objectsRead.get(id) match { case Some(result) => Some(result.asInstanceOf[T])
-                              case None => { val obj = delegate.construct
-                                             obj foreach (objectsRead.put(id, _))
-                                             val obj2 = delegate.readXML(this, node, obj)
-                                             objectsRead.put(id, obj2)
-                                             Some(obj2) } } }
- def readAttribute(node: Node, name: String): Option[String] = DOMSimple.getChildNodes(node, "attribute").toStream flatMap (element =>
-  if (getAttribute(element, "name") == Some(name)) getAttribute(element, "value") else None) firstOption
- def getObjectNames(node: Node): Iterable[String] = DOMSimple.getChildNodes(node, "object") flatMap (readAttribute(_, "name"))
- def typeOfChild(node: Node, name: String) = DOMSimple.getChildNodes(node, "object").toStream filter(getAttribute(_, "name") == name) head }
 
-trait ReadDelegate[T] { def construct: Option[T]
-                        def readXML(deserialiser: XMLDeserialiser, node: Node, obj: Option[T]): T }
+ def newId(obj: Any): (XMLSerialiser, Int) = {
+  for { x <- 1 to Integer.MAX_VALUE
+        if !alreadySeen.exists(_._1 == x) } return XMLSerialiser((x -> obj) :: alreadySeen) -> x
+  throw null
+ }
+}
 
-trait WriteDelegate[T] { def writeXML(serialiser: XMLSerialiser, obj: T): XMLSerialiser
-                         def identifier: String }
+case class XMLDeserialiser(alreadySeen: List[(Int, Any)]) {
+ def fromXML[T](elem: Elem)(implicit serial: Serial[T]): (XMLDeserialiser, T) = {
+  val id = (elem \ "@id" toString).toInt
+  alreadySeen.find(_._1 == id) match {
+   case Some((_, obj)) => this -> obj.asInstanceOf[T]
+   case None => val (newDeserialiser, t) = serial.fromXML(elem)(this)
+                XMLDeserialiser(id -> t :: newDeserialiser.alreadySeen) -> t
+  }
+ }
+}
 
-import java.io.Writer
-case class XMLSerialiser(writer: Writer) {
- private var alreadyStoredVar: List[AnyRef] = Nil
+object XMLSerialiser { def apply(): XMLSerialiser = XMLSerialiser(Nil) }                                                  
+object XMLDeserialiser { def apply(): XMLDeserialiser = XMLDeserialiser(Nil)                       
+                         def fromString(xml: String): Elem = XML.loadString(xml) }
 
- def writeObject[T <: AnyRef](obj: T, name: String, delegate: WriteDelegate[T]) = {
-  val id = { var tmp = alreadyStoredVar indexOf obj
-             if (tmp < 0)
-              tmp = alreadyStoredVar.size
-             tmp }
-  writer.write("<object name=\"" + name + "\" serialiser=\"" + delegate.identifier + "\" id=\"" + id + "\">")
-  if (id == alreadyStoredVar.size) { alreadyStoredVar = alreadyStoredVar ++ List(obj)
-                                  delegate.writeXML(this, obj) }
-  writer.write("</object>")
-  this }
-
- def writeAttribute(name: String, value: String) =
-  writer.write("<attribute name=\"" + xmlEncode(name) + "\" value=\"" + xmlEncode(value) + "\"/>") then this
- def xmlEncode(value: String) = value replaceAll ("\"", "&quot;")
- def close = writer.close }
+import ipsim.network.Network
+import Network._
 
 object LogRetentionTest { def apply = { implicit var network = new Network
                                         network.log ++= List("Sample Data")
@@ -67,20 +61,23 @@ import ipsim.network.{NetworkContext, Computer, Card}
 import java.io.StringWriter
 
 object XMLSerialisationTest { def testComputerIPForwarding = () => {
- implicit val network = new Network
- val context = network.contexts append new NetworkContext
- 
- val computer = Computer(Point(20, 20))
- context.visibleComponentsVar ::= computer
-
- val card = Card(false, Right(computer))
- context.visibleComponentsVar ::= card
-                                                              
- computer.ipForwardingEnabled = true
  val writer = new StringWriter
- val serialiser = new XMLSerialiser(writer)
- serialiser.writeObject(network, "network", network.delegate)
-                                                                
- val deserialiser = XMLDeserialiser.fromString(writer.getBuffer.toString).get
- deserialiser.readObject(network.delegate).get
+
+ {
+  implicit val network = new Network
+  val context = network.contexts append new NetworkContext
+ 
+  val computer = Computer(Point(20, 20))
+  context.visibleComponentsVar ::= computer
+
+  val card = Card(false, Right(computer))
+  context.visibleComponentsVar ::= card
+                                                              
+  computer.ipForwardingEnabled = true
+  
+  val serialiser = XMLSerialiser()
+  XML.write(writer, serialiser.toXML(network, "network"), "UTF-8", true, null)
+ }
+                                                   
+ val network = XMLDeserialiser().fromXML[Network](XMLDeserialiser.fromString(writer.getBuffer.toString))
  network.all exists (_ fold (card => false, _.ipForwardingEnabled, cable => false, hub => false)) } }

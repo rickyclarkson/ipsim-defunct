@@ -7,7 +7,13 @@ import java.io.StringReader
 
 object DOMSimple {
  private implicit def nodeList2Seq(nodeList: NodeList): Seq[Node] = for (a <- 0 until nodeList.getLength) yield nodeList.item(a)
- def getChildNodes(root: Node, name: String): Iterable[Node] = root.getChildNodes filter (_.getNodeName == name)
+ def getChildNodes(root: Node, name: String): Iterable[Node] = {
+  println("getChildNodes("+ipsim.network.Debug.toXML(root)+", "+name)
+  val result = root.getChildNodes filter (_.getNodeName == name)
+  println("/getChildNodes("+result.map(ipsim.network.Debug.toXML).mkString+")")
+  result
+ }
+
  def getChildElementNode(root: Node, name: String) = root.getChildNodes.toStream flatMap (node => node match { case element: Element => Some(element)
                                                                                                                case _ => None } ) apply 0
  def getAttribute(node: Node, name: String) = Some(node.getAttributes.getNamedItem(name).getNodeValue) }
