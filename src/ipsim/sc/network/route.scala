@@ -3,7 +3,6 @@ package ipsim.network.route
 import ipsim.network.{Computer, Network}
 
 import ipsim.awt.Point
-import ipsim.persistence.{Serial, XMLSerialiser, XMLDeserialiser}
 import ipsim.lang.Implicits._
 
 object RoutingTableTests {
@@ -48,27 +47,7 @@ case class Route(val netBlock: NetBlock, val gateway: IPAddress) {
                         
 import scala.xml._
 
-object Route {
- implicit object serial extends Serial[Route] {
-  def toXML(route: Route) = originalSerialiser => {
-   val (serialiser, netBlock) = originalSerialiser.toXML(route.netBlock, "destination")
-   serialiser ->
-    <object>
-     { netBlock }
-     <attribute name="gateway" value={route.gateway.toString}/>
-    </object>
-  }
-   
-  def fromXML(elem: Elem) = deserialiser =>
-   deserialiser.fromXML[NetBlock]((elem \ "object" \ "@name" filter (_ == "destination") first).asInstanceOf[Elem]) match {
-    case (`deserialiser`, netBlock) => deserialiser -> Route(netBlock, IPAddress.valueOf((elem \ "attribute" \ "@name").filter((_: Node).toString == "gateway") \ "@value" toString).get)
-   }
- }
-}
-
 import scala.collection.mutable.ListBuffer
-
-import ipsim.persistence.Implicits._
 
 class RoutingTable {
  val routes = new ListBuffer[Route]
@@ -78,43 +57,3 @@ class RoutingTable {
  def defaultRoutes = routes filter (_.isDefault)
  def explicitRoutes = routes filter (!_.isDefault)
 }
-
-object RoutingTable { 
- implicit object delegate extends Serial[RoutingTable] {
-  def toXML(table: RoutingTable) = (originalSerialiser: XMLSerialiser) => {
-   var serialiser = originalSerialiser
-   import scala.collection.mutable.ListBuffer
-   val elems = new ListBuffer[Elem]
-   for ((entry, a) <- table.routes.toList.zipWithIndex) {
-    val (newSerialiser, elem) = serialiser.toXML(entry, "entry "+a)
-    serialiser = newSerialiser
-    elems += elem
-   }
-   serialiser -> <object>{elems}</object>
-  }
-
-  def fromXML(elem: Elem) = originalDeserialiser => {
-   var deserialiser = originalDeserialiser
-   var table = new RoutingTable
-   for (name <- (elem \ "object" \ "@name" map (_.toString) filter (_ != "computer")).toList sort (_.compareTo(_) < 0)) {
-    deserialiser.fromXML[Route]((elem \ "object" \ "@name" filter (_.toString == name)).first.asInstanceOf[Elem]) match {
-     case (d, route) => { deserialiser = d
-                          table.add(route) }
-    }
-   }
-   deserialiser -> table
-  }
-     
-  val identifier="ipsim.persistence.delegates.RoutingTableDelegate" 
- }
-}
-                                                                                                                                                    
-import java.io.File
-object RoutingTableBugs { def apply: Boolean = { implicit val network = new Network
-                                                 network loadFromFile new File("datafiles/unconnected/1.14.ipsim")
-                                                 val netMask = NetMask.valueOf("192.0.0.0").get
-                                                 val computers = network computersByIP IPAddress.valueOf("10.0.0.1").get
-                                                 for { computer <- computers
-                                                       possibleCards = computer.cardsWithDrivers filter (_.netMask == Some(netMask))
-                                                       if !possibleCards.isEmpty } return !computer.routingTable.defaultRoutes.isEmpty
-                                                 false } }

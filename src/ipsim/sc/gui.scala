@@ -154,42 +154,11 @@ object MenuHandler {
                                              editProblemButton setText "Edit Problem"
                                              InitialDialog.initialDialog(random, frame, network) setVisible true
                                              frame.repaint() }
- def fileOpen(implicit random: Random) = 
-  if ((!network.modified || networkModifiedDialog) && fileChooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
-   network.loadFromFile(fileChooser.getSelectedFile)
-   tabbedPane.removeAll
-   for ((context, a) <- network.contexts.stream.zipWithIndex)
-    tabbedPane.addTab("Network "+(a+1), new NetworkView)
-   Global.filename=filename
-   frame.repaint() }
-
- def fileClose(implicit random: Random) = { tabbedPane.removeAll
-                                            network.contexts.clear
-                                            network.clearAll
-                                            network.modified = false
-                                            network.zoomLevel = 1.0
-                                            network.log = Nil
-                                            Global.filename = None
-                                            networkNew }
- import java.io.IOException
- def fileSave: Unit = filename match { case Some(filename) => network.saveToFile(filename)
-                                       case None => fileSaveAs }
-
- def fileSaveAs: Unit = if (fileChooser.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
-  val filename = fileChooser.getSelectedFile
-  if (!filename.exists || CustomJOptionPane.showYesNoCancelDialog("This file exists.  Overwrite?", "Overwrite?") == JOptionPane.YES_OPTION) {
-   network.saveToFile(filename)
-   Global.filename = Some(filename) } }
-
- def fileExit = if (!(network.modified && !networkModifiedDialog)) { frame setVisible false
-                                                                     frame.dispose
-                                                                     System exit 0 }
-
  def clearAllArpTables = { network.log ++= List("Cleared all ARP tables.")
                            network.all flatMap (_.asComputer) foreach (_.arpTable.clear) }
  def testConnectivity = ConnectivityTestDialog()
  def testConformance = {
-  if (!network.userPermissions.allowFullTests._1) { NetworkContext.errors(network.userPermissions.allowFullTests._2) } else {
+  if (!network.userPermissions.allowFullTests._1) { System.err.println(network.userPermissions.allowFullTests._2) } else {
    val results = new ConformanceTests()(network).allChecks
    val message = networkContext.problem match {
     case None => "No problem is set, so some checks cannot be performed\n\n" + results.percent + "%\n\n" + results.summary
@@ -208,55 +177,17 @@ object MenuHandler {
   val result = CustomJOptionPane.showLabelsAndConfirmation(frame, "Select a difficulty level", "Select a difficulty level",
                                                            Array("Easy", "Medium", "Hard"), 1, "Duplicate Test Conditions")
   if (result.choice == null) networkNew else if (result.confirmationTicked) {
-   editProblemButton setText "Upload Solution"
    network.userPermissions = PracticeTestSimulatingActualTest } else network.userPermissions = PracticeTest
 
   import ipsim.network.ProblemDifficulty
   networkContext.problem = Some(ProblemDifficulty.valueOf(result.choice.toUpperCase))
   JOptionPane.showMessageDialog(frame, networkContext.problem.toString) }
 
- import ipsim.web.Web
- import ipsim.network.{IPAddress, Problem, NetBlock}
- def loadAssessmentProblem(implicit random: Random) = {
-  val testNumber = JOptionPane.showInputDialog(frame, "Enter the test number given to you by your tutor")
-  if (testNumber != null && testNumber.length!=0) {
-   network.testName = Some(testNumber)
-   Web.getProblem(testNumber).map(string => {
-    val strings = string split "\n"
-    val netSizesString = strings(1).split("=")(1)
-    val netSizes = netSizesString split ","
-    val chosenSize = netSizes((Math.random * netSizes.length).toInt)
-    val subnetOptionString = strings(2).split("=")(1)
-    val subnetOptions = subnetOptionString split ","
-    val chosenSubnetOption = subnetOptions((Math.random * subnetOptions.length).toInt)
-    var generateNetworkNumber: IPAddress = null
-    var giveUp = 0
-    do { giveUp += 1
-         generateNetworkNumber = Problem.generateNetworkNumber(random, Integer.parseInt(chosenSize)) }
-    while (giveUp<100 && 0==(generateNetworkNumber.rawValue & 0xFF00))
-
-    val mask = NetMask.fromPrefixLength(Integer.parseInt(chosenSize)).get
-    val problem = Problem(NetBlock(generateNetworkNumber, mask), Integer.parseInt(chosenSubnetOption))
-    networkContext.problem = Some(problem)
-    network.userPermissions = ActualTest
-    var set = false
-
-    do { val userName = JOptionPane.showInputDialog(frame, "Please enter your University email address, e.g., N.Other@student.salford.ac.uk")
-         if (userName != null && !(0==userName.length)) { network.emailAddress = Some(userName)
-                                                          Web.putSUProblem(userName, problem.toString)
-                                                          set = true } } while (!set) } ) } }
- import ipsim.lang.Implicits._
- def networkModifiedDialog = {
-  val result = CustomJOptionPane.showYesNoCancelDialog (
-   (if (network.userPermissions == ActualTest)
-    """<html>CLOSING THE NETWORK WITHOUT UPLOADING WILL CAUSE YOU TO LOSE YOUR WORK.
-    <br>CLICK CANCEL, THEN UPLOAD SOLUTION.<br>IF YOU ARE UNSURE, RAISE YOUR HAND.<br><br>""" else "") + "This network has been modified.  Save changes?",
-   "Confirm Lose Data?")
-  if (result == JOptionPane.YES_OPTION) fileSave then !network.modified else result != JOptionPane.CANCEL_OPTION }
-
  import Global.networkView
- def zoomOut = (network.zoomLevel /= 1.1) then networkView.repaint()
- def zoomIn = (network.zoomLevel *= 1.1) then networkView.repaint()
+ def zoomOut = { (network.zoomLevel /= 1.1)
+                 networkView.repaint() }
+ def zoomIn = { (network.zoomLevel *= 1.1)
+                networkView.repaint() }
  def zoomToFit = { val view = Global.networkView
                    val optimumSize = view.unzoomedPreferredSize(Global.network)
                    val actualSize = view.getVisibleRect.getSize
@@ -266,15 +197,7 @@ object MenuHandler {
                    view.repaint() }
  def zoomOneToOne = { network.zoomLevel = 1.0
                       networkView.repaint() }
-
- def downloadConfiguration = { val name = { def getName: String = { val got = JOptionPane.showInputDialog(frame, "Enter the name of the configuration")
-                                                                    if (got == null) null else if (got.length == 0) getName else got }
-                                            getName }
-                               val namedConfig = Web getNamedConfiguration name
-                               namedConfig.fold(p => { val tmp = networkView.ignorePaints
-                                                       try { networkView.ignorePaints = true
-                                                             network loadFromString p._2 } finally { networkView.ignorePaints = tmp }
-                                                             frame setTitle ("IPSim - " + p._1) }, reason => error(reason)) } }
+}
 
 import java.awt.{Toolkit, FlowLayout}
 import ipsim.swing.ScrollableEditorPane
@@ -343,7 +266,6 @@ object InitialDialog {
   val practiceTestRadioButton = RadioButton("Practice Setup Test") font font mnemonic KeyEvent.VK_C opaque false
   val okButton = Button(" OK ") mnemonic KeyEvent.VK_O
   val helpButton = Button(" Help ") mnemonic KeyEvent.VK_H
-  val cancelButton = Button(" Exit ") mnemonic KeyEvent.VK_X listener (MenuHandler.fileExit _)
   val padding = 10
 
   AnyLayout.useAnyLayout(contentPane, 0.5F, 0.5F, new SizeCalculator {
@@ -353,7 +275,7 @@ object InitialDialog {
     val widestRadioButtonOnLeft = List(freeformRadioButton, practiceTestRadioButton) map (_.getPreferredSize.width) reduceLeft Math.max
     val widestRadioButtonOnRight = List(practiceTestRadioButton, practiceTroubleshootingTest) map (_.getPreferredSize.height) reduceLeft Math.max
     List(padding * 2 + introLabel.getPreferredSize.width, padding * 3 + widestRadioButtonOnLeft + widestRadioButtonOnRight,
-         padding * 4 + List(okButton, helpButton, cancelButton).map(_.getPreferredSize.width).reduceLeft(_+_)) reduceLeft Math.max } },
+         padding * 4 + List(okButton, helpButton).map(_.getPreferredSize.width).reduceLeft(_+_)) reduceLeft Math.max } },
                          ConstraintUtility typicalDefaultConstraint new Runnable { def run = throw null } )
   val constraints = PercentConstraintsUtility.newInstance(contentPane)
   val introLabelConstraint = ConstraintUtility topCentre padding
@@ -378,7 +300,6 @@ object InitialDialog {
 
   okButton.listener(() => {
    val doLater = if (practiceTestRadioButton isSelected) (() => MenuHandler.practiceTest) else
-    if (takeTestRadioButton isSelected) () => MenuHandler.loadAssessmentProblem else
      if (practiceTroubleshootingTest isSelected) () => JOptionPane.showMessageDialog(frame,"Practice Troubleshooting Test not yet supported") else
       if (actualTroubleshootingTest isSelected) () => JOptionPane.showMessageDialog(frame, "Actual Troubleshooting Test not yet supported")
       else () => network.userPermissions = Freeform
@@ -390,7 +311,6 @@ object InitialDialog {
   helpButton listener (() => { dialog.dispose
                                network.userPermissions = Freeform
                                MenuHandler.helpContents } )
-  constraints.add (cancelButton, 70, 85, 20, 10, false, false)
   dialog setResizable false
   dialog.pack
   dialog centreOnParent frame
@@ -493,9 +413,6 @@ object ExceptionReportDialog { def handle(exception: Throwable)(implicit frame: 
 
  constraints add (new JScrollPane(details), 10, 45, 80, 30, true, true)
  constraints add (Buttons.closeButton("Ignore", dialog), 10, 80, 20, 10, false, false)
- constraints add (new Button("Upload").listener(() => Web putException (frame, Throwables.asString(exception), network.saveToString)),
-                  40, 80, 30, 10,false, false)
- constraints add (new Button("Quit").listener(() => MenuHandler.fileExit), 80, 80, 15, 10, false, false)
 
  dialog setSize (3 * frame.getWidth / 4, 3 * frame.getHeight/4)
  Components centreOnParent (dialog, frame)
@@ -1208,6 +1125,7 @@ sealed trait ScrapbookElement { def subnetTextField: NetBlockTextField
                                 def panel: JPanel
                                 def netMaskTextField: SubnetMaskTextField
                                 def textFields: Iterable[JTextField] = ipAddressTextFields.map(_.component) ++ List(subnetTextField.component) }  
+
 import ipsim.swing.LabelledTextField
 object ScrapbookElement { def createElement = {
  val panel = new JPanel

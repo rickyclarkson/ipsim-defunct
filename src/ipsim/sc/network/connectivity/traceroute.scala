@@ -20,11 +20,3 @@ object TracerouteResultsUtility { def newTracerouteResults = new TracerouteResul
                                                                                      def size = builder.toString split "\n" length } }
 trait TracerouteResults { def add(obj: String): Unit
                           def size: Int }
-
-import java.io.File
-object TracerouteTest { def apply = {
- implicit val network = new Network
- network loadFromFile new File("datafiles/fullyconnected/1.6.ipsim")
- val ipAddress = IPAddress.valueOf("146.87.1.1").get
- network.computersByIP(ipAddress).forall(computer => Traceroute.trace(computer, IPAddress.valueOf("146.87.4.3").get, 30).toString.startsWith(
-  "1: 146.87.1.3\n2: 146.87.2.3\n3: 146.4.3")) } }

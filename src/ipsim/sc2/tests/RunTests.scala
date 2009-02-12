@@ -4,18 +4,13 @@ import ipsim.lang.Implicits._
 import com.rickyclarkson.testsuite.UnitTestUtility.runTests
 import ipsim.network.{Positions, ProblemTest, Computer}
 import ipsim.network.connectivity.cable.CableTest
-import ipsim.persistence.{LogRetentionTest, XMLSerialisationTest}
-import ipsim.network.{Hub, BugzillaBug18}
+import ipsim.network.Hub
 import ipsim.util.Collections
-import ipsim.network.{PositionTest, InfiniteLoopBug}
-import ipsim.network.connectivity.FullyConnectedFilesTest
-import ipsim.network.connectivity.{ComputerArpIncomingTest, ComputerArpOutgoingTest, IncompleteArpTest}
+import ipsim.network.PositionTest
+import ipsim.network.connectivity.{ComputerArpIncomingTest, ComputerArpOutgoingTest}
 import ipsim.network.route.RoutingTableTests.{testRetention,testGetBroadcastRoute}
-import ipsim.network.route.RoutingTableBugs
-import ipsim.network.connectivity.{BroadcastPingTest, RoutingLoopTest, PingerTest, UnconnectedFilesTest, ComputerArpIncomingTest, FullyConnectedFilesTest,
-                                   RemoteBroadcastBug, ArpStoredFromForeignNetworkBug}
+import ipsim.network.connectivity.ComputerArpIncomingTest
 import ipsim.network.ComputerTest.testCardIndexRetention
-import ipsim.network.connectivity.traceroute.TracerouteTest
 import ipsim.util.Collections.testAddOrSet
 
 import fj.P1
@@ -32,33 +27,17 @@ object RunTests extends Application {
 
  implicit def p1ToClosure(la: P1[java.lang.Boolean]): () => Boolean = new (() => Boolean) { def apply() = la._1.asInstanceOf[Boolean]
                                                                                                              override def toString = la.toString }
- val results=List[() => Boolean](Computer.testLoadingRestoresBigPipeIcon,
-                                 Computer.testLoadingGivesRightNumberOfComponents _,
-//                                 XMLSerialisationTest.testComputerIPForwarding,                 
-                                 PositionTest.testRetention, PositionTest.cableWithTwoEnds, PositionTest.setParentTwice,
+ val results=List[() => Boolean](PositionTest.testRetention, PositionTest.cableWithTwoEnds, PositionTest.setParentTwice,
                                  PositionTest.testRetention2,
                                  Collections.testAddCollection,
                                  testG,
                                  CableTest.testCableWithNoParents,
                                  CableTest.testCable,
-  //                               BugzillaBug18.test,
-  //                               FullyConnectedFilesTest.test _,
-  //                               ComputerArpIncomingTest.test,
                                  () => testRetention,
                                  () => testGetBroadcastRoute,
-  //                               () => RoutingTableBugs.apply,                                 
-  //                               () => BroadcastPingTest.apply,
                                  ProblemTest.testInvalidNetMaskRejection,
                                  ProblemTest.test1,
-      //                           () => RemoteBroadcastBug.apply,
-                                 () => ArpStoredFromForeignNetworkBug.apply,
-                                 () => InfiniteLoopBug.apply,
-        //                         ComputerArpOutgoingTest.test,
                                  () => testCardIndexRetention,
-                                 () => RoutingLoopTest.apply,
-                                 () => PingerTest.apply,
-                                 TracerouteTest.apply _,
-          //                       UnconnectedFilesTest.apply _,
-            //                     IncompleteArpTest.apply _,
                                  testAddOrSet)
- println(results.map(x => { println(x); x() })) }
+ println(results.map(_()))
+}
